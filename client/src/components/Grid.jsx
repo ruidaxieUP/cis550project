@@ -12,12 +12,12 @@ const Grid = ({ images }) => {
 };
 
 Grid.propTypes = {
-    images: PropTypes.arrayOf(
-      PropTypes.shape({
-        src: PropTypes.string.isRequired,
-        title: PropTypes.string.isRequired,
-      })
-    ).isRequired,
-  };
+  images: PropTypes.arrayOf(
+    PropTypes.shape({
+      src: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+};
 
 export default Grid;

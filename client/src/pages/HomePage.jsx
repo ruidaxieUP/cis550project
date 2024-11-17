@@ -113,14 +113,13 @@ export default function HomePage() {
         </div>
       </div>
 
-
       {/* Main Content Section */}
 
       <div className="mt-16" />
 
       {/* Image Slider Section */}
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
-      <ImageSlider title="Top 10 Most Popular Directors" data={data} />
+        <ImageSlider title="Top 10 Most Popular Directors" data={data} />
       </div>
 
       <div className="mt-16" />
@@ -134,8 +133,8 @@ export default function HomePage() {
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
         <ImageSlider title="Top 10 Most Popular Actresses" data={data} />
       </div>
-      
 
-      </div>
+      
+    </div>
   );
 }
