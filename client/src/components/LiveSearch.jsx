@@ -61,14 +61,14 @@ function LiveSearch({ results = [], value, onChange, onSelect }) {
   return (
     <div className="flex items-center justify-center h-screen">
       {/* Search Bar */}
-      <div className="flex w-[586px] pt-[12px] pr-[16px] pb-[12px] pl-[16px] gap-[8px] items-center flex-nowrap bg-[#fff] rounded-full border-solid border border-[#d9d9d9] relative overflow-hidden shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
+      <div className="flex w-[600px] pt-[12px] pr-[16px] pb-[12px] pl-[16px] gap-[8px] items-center flex-nowrap bg-[#fff] rounded-full border-solid border border-[#d9d9d9] relative overflow-hidden shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]">
         <div className="w-[16px] h-[16px] z-20">
           <input
             value={defaultValue}
             onChange={handleChange}
             type="text"
             onKeyDown={handleKeyDown}
-            className="w-[586px] h-[40px] shrink-0 bg-transparent border-none absolute top-0 left-0 z-[22] pl-[16px]"
+            className="w-[704px] h-[40px] shrink-0 bg-transparent border-none absolute top-0 left-0 z-[22] pl-[16px]"
             placeholder="Placeholder"
           />
         </div>
@@ -77,7 +77,7 @@ function LiveSearch({ results = [], value, onChange, onSelect }) {
       {/* Dropdown Results */}
       {showResults && (
         <div
-          className="absolute w-[586px] bg-white shadow-lg rounded-bl-lg rounded-br-lg max-h-56 overflow-y-auto"
+          className="absolute w-[600px] bg-white shadow-lg rounded-bl-lg rounded-br-lg max-h-56 overflow-y-auto"
           style={{
             top: "100%", // Position directly below the search box
             zIndex: 50, // Ensure it appears above other content
