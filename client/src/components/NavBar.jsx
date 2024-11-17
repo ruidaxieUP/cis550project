@@ -1,23 +1,21 @@
-import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import '../index.css';
 
 const NAV_ITEMS = [
   { name: "Home", path: "/" },
   { name: "Person", path: "/person" },
-  { name: "Movie", path: "/movie" },
+  { name: "Movie", path: "/movies" },
   { name: "Contact", path: "/contact" },
 ];
 
 NavItem.propTypes = {
   name: PropTypes.string.isRequired,
   path: PropTypes.string.isRequired,
-  selectedPage: PropTypes.string.isRequired,
-  onClick: PropTypes.func.isRequired,
+  isActive: PropTypes.bool.isRequired,
 };
 
-function NavItem({ name, path, selectedPage, onClick }) {
+function NavItem({ name, path, isActive }) {
   const baseLinkStyle = 'flex pt-[8px] pr-[16px] pb-[8px] pl-[16px] gap-[8px] justify-center items-center flex-nowrap rounded-[8px] relative pointer';
   const activeStyle = `${baseLinkStyle} bg-[#f5f5f5] border-none`;
   const inactiveStyle = `${baseLinkStyle} bg-transparent`;
@@ -25,8 +23,7 @@ function NavItem({ name, path, selectedPage, onClick }) {
   return (
     <NavLink
       to={path}
-      onClick={() => onClick(name)}
-      className={selectedPage === name ? activeStyle : inactiveStyle}
+      className={isActive ? activeStyle : inactiveStyle}
     >
       <span className="h-[16px] shrink-0 basis-auto font-['Inter'] text-[16px] font-normal leading-[16px] text-[#1e1e1e] relative text-left whitespace-nowrap">
         {name}
@@ -36,11 +33,7 @@ function NavItem({ name, path, selectedPage, onClick }) {
 }
 
 export default function NavBar() {
-  const [selectedPage, setSelectedPage] = useState("Home");
-
-  const handlePageClick = (page) => {
-    setSelectedPage(page);
-  };
+  const location = useLocation();
 
   return (
     <div className='flex w-[1436px] pt-[16px] pr-[32px] pb-[16px] pl-[32px] gap-[24px] items-center flex-wrap bg-[#fff] border-solid border-t border-b border-[#d9d9d9] relative overflow-hidden mx-auto my-0' style={{ height: '108px' }}>
@@ -52,8 +45,7 @@ export default function NavBar() {
             key={item.name}
             name={item.name}
             path={item.path}
-            selectedPage={selectedPage}
-            onClick={handlePageClick}
+            isActive={location.pathname === item.path}
           />
         ))}
       </div>

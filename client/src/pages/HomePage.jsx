@@ -84,19 +84,41 @@ export default function HomePage() {
   return (
     <div className="main-container w-full bg-[#fff] relative overflow-hidden mx-auto my-0">
       {/* Header Section: Title and Subtitle */}
-      <div className="flex flex-col items-center justify-center w-full h-[570px] bg-[rgba(255,255,255,0.16)] bg-[url(../assets/images/7f12ea1300756f144a0fb5daaf68dbfc01103a46.png)] bg-cover bg-no-repeat relative">
-        {/* Title and Subtitle */}
-        <div className="flex flex-col items-center justify-center mb-8 text-center">
-          <span className="font-['Inter'] text-[72px] font-bold leading-[86px] text-[#0c0c0d] tracking-[-2.16px] whitespace-nowrap z-[16]">
+      <div
+        className="flex flex-col items-center justify-center w-full h-[570px] bg-cover bg-no-repeat relative"
+        style={{
+          position: "relative",
+        }}
+      >
+        {/* Background Image Overlay */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundImage: `url('https://image.tmdb.org/t/p/w500/hQ4pYsIbP22TMXOUdSfC2mjWrO0.jpg')`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            opacity: 0.4, // Adjust opacity here
+            zIndex: 1,
+          }}
+        ></div>
+
+        {/* Content */}
+        <div className="flex flex-col items-center justify-center mb-8 text-center relative z-[2]">
+          <span className="font-['Inter'] text-[72px] font-bold leading-[86px] text-[#0c0c0d] tracking-[-2.16px] whitespace-nowrap">
             Movie People DB
           </span>
-          <span className="font-['Inter'] text-[32px] font-normal leading-[38px] text-[#0c0c0d] z-[17]">
+          <span className="font-['Inter'] text-[32px] font-normal leading-[38px] text-[#0c0c0d]">
             Exploring the individuals who bring stories to life.
           </span>
         </div>
 
         {/* Search Section */}
-        <div className="flex w-[704px] h-[40px] justify-between items-center relative z-[23] mt-8">
+        <div className="flex w-[704px] h-[40px] justify-between items-center relative z-[2] mt-8">
           <LiveSearch
             results={results}
             value={selectedProfile?.name}
@@ -133,8 +155,6 @@ export default function HomePage() {
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
         <ImageSlider title="Top 10 Most Popular Actresses" data={data} />
       </div>
-
-      
     </div>
   );
 }
