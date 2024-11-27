@@ -24,13 +24,14 @@ export default function PersonPage() {
     const fetchPaginatedData = () => {
       const startIndex = (currentPage - 1) * pageSize;
       const paginatedData = fullData.slice(startIndex, startIndex + pageSize);
-
+  
       setTotalPages(Math.ceil(fullData.length / pageSize));
       setData(paginatedData);
     };
-
+  
     fetchPaginatedData();
-  }, [currentPage, filter]);
+  }, [currentPage, filter, fullData]); 
+  
 
    // Reset to first page on filter change
   const handleFilterChange = (newFilter) => {
