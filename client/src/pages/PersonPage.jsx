@@ -11,7 +11,7 @@ export default function PersonPage() {
 
   const pageSize = 16; 
 
-  // Mock server-side data
+  // TODO Mock server-side data, will let the server handle this in the future
   const fullData = Array.from({ length: 114 }, (_, index) => ({
     id: index,
     image: "https://via.placeholder.com/150",
@@ -30,7 +30,7 @@ export default function PersonPage() {
     };
   
     fetchPaginatedData();
-  }, [currentPage, filter, fullData]); 
+  }, [currentPage, filter]); //TODO - Add filter to dependency array
   
 
    // Reset to first page on filter change
@@ -53,7 +53,7 @@ export default function PersonPage() {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          opacity: 0.8, // Background image opacity
+          opacity: 0.8, 
         }}
       >
       </div>
