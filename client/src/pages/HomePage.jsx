@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import LiveSearch from "../components/LiveSearch";
 
 import ImageSlider from "../components/ImageSlider";
+
+
+const fetchData = async (endpoint, setData) => {
+  try {
+    const response = await fetch(`http://localhost:8080/api/${endpoint}`);
+    const data = await response.json();
+    setData(data);
+  } catch (error) {
+    console.error(`Error fetching ${endpoint}:`, error);
+  }
+};
 
 {
   /*Temporary search profiles*/
@@ -70,6 +81,16 @@ export default function HomePage() {
   }
   const [results, setResults] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState(null);
+
+  const [directors, setDirectors] = useState([]);
+  const [maleActors, setMaleActors] = useState([]);
+  const [femaleActors, setFemaleActors] = useState([]);
+
+  useEffect(() => {
+    fetchData('top-directors', setDirectors);
+    fetchData('top-actors', setMaleActors);
+    fetchData('top-actresses', setFemaleActors);
+  }, []);
 
   const handleChange = (e) => {
     const query = e.target.value.toLowerCase();
@@ -141,19 +162,19 @@ export default function HomePage() {
 
       {/* Image Slider Section */}
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
-        <ImageSlider title="Top 10 Most Popular Directors" data={data} />
+        <ImageSlider title="Top 10 Most Popular Directors" data={directors} />
       </div>
 
       <div className="mt-16" />
 
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
-        <ImageSlider title="Top 10 Most Popular Actors" data={data} />
+        <ImageSlider title="Top 10 Most Popular Actors" data={maleActors} />
       </div>
 
       <div className="mt-16" />
 
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
-        <ImageSlider title="Top 10 Most Popular Actresses" data={data} />
+        <ImageSlider title="Top 10 Most Popular Actresses" data={femaleActors} />
       </div>
     </div>
   );
