@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import LiveSearch from "../components/LiveSearch";
 
 import ImageSlider from "../components/ImageSlider";
-
+import { PairImageSlider } from "../components/ImageSlider";
 
 const fetchData = async (endpoint, setData) => {
   try {
@@ -31,48 +31,87 @@ const profiles = [
   { id: "11", name: "Anne Ortha" },
 ];
 
-const data = [
+const pairingsData = [
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 1",
+    actorName: "Actor 1",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 2",
+    actorName: "Actor 2",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 3",
+    actorName: "Actor 3",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 4",
+    actorName: "Actor 4",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 5",
+    actorName: "Actor 5",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 6",
+    actorName: "Actor 6",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 7",
+    actorName: "Actor 7",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 8",
+    actorName: "Actor 8",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 9",
+    actorName: "Actor 9",
   },
   {
-    src: "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    title: "FirstName LastName",
+    directorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    actorImage:
+      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
+    directorName: "Director 10",
+    actorName: "Actor 10",
   },
-  // Add more image objects here...
 ];
 
 export default function HomePage() {
@@ -87,9 +126,9 @@ export default function HomePage() {
   const [femaleActors, setFemaleActors] = useState([]);
 
   useEffect(() => {
-    fetchData('top-directors', setDirectors);
-    fetchData('top-actors', setMaleActors);
-    fetchData('top-actresses', setFemaleActors);
+    fetchData("top-directors", setDirectors);
+    fetchData("top-actors", setMaleActors);
+    fetchData("top-actresses", setFemaleActors);
   }, []);
 
   const handleChange = (e) => {
@@ -158,23 +197,39 @@ export default function HomePage() {
 
       {/* Main Content Section */}
 
+      {/* Image Slider Section */}
       <div className="mt-16" />
 
-      {/* Image Slider Section */}
+      {/* Top Directors */}
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
         <ImageSlider title="Top 10 Most Popular Directors" data={directors} />
       </div>
 
+      {/* Top Actors */}
       <div className="mt-16" />
 
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
         <ImageSlider title="Top 10 Most Popular Actors" data={maleActors} />
       </div>
 
+      {/* Top Actresses */}
       <div className="mt-16" />
 
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
-        <ImageSlider title="Top 10 Most Popular Actresses" data={femaleActors} />
+        <ImageSlider
+          title="Top 10 Most Popular Actresses"
+          data={femaleActors}
+        />
+      </div>
+
+      {/* Top Director-Actor Pairings */}
+
+      <div className="mt-16" />
+      <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
+        <PairImageSlider
+          title="Top 10 Director-Actor Pairings with Highest Ratings"
+          data={pairingsData}
+        />
       </div>
     </div>
   );
