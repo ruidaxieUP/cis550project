@@ -27,12 +27,13 @@ connection.connect((err) => err && console.log(err));
  ******************/
 
 // Route 1: GET /api/top-directors
-const top_directors = async function(req, res) {
+const topDirectors = async function(req, res) {
   query = `
     SELECT name, profile_path
     FROM person_details
     WHERE known_for_department = 'Directing'
-    ORDER BY CAST(popularity AS float) DESC
+    AND profile_path is not null
+    ORDER BY popularity DESC
     LIMIT 10;
   `
   connection.query(
@@ -42,7 +43,7 @@ const top_directors = async function(req, res) {
       res.json({});
     } else {
       res.json(data.rows.map(row => ({
-        src: row.profile_path ? picture_url + picture_size + row.profile_path : default_picture,
+        src: picture_url + picture_size + row.profile_path,
         title: row.name
       })));
     }
@@ -50,13 +51,14 @@ const top_directors = async function(req, res) {
 }
 
 // Route 2: GET /api/top-actors
-const top_actors = async function(req, res) {
+const topActors = async function(req, res) {
   query = `
     SELECT name, profile_path
     from person_details
     WHERE gender = '2'
+    AND profile_path is not null
     AND known_for_department LIKE 'Act%'
-    ORDER BY CAST(popularity AS float) DESC
+    ORDER BY popularity DESC
     LIMIT 10;
   `
   connection.query(
@@ -66,21 +68,22 @@ const top_actors = async function(req, res) {
       res.json({});
     } else {
       res.json(data.rows.map(row => ({
-        src: row.profile_path ? picture_url + picture_size + row.profile_path : default_picture,
+        src: picture_url + picture_size + row.profile_path,
         title: row.name
       })));
     }
   });
 }
 
-// Route 3: GET /api/top-acturesses
-const top_actresses = async function(req, res) {
+// Route 3: GET /api/top-actresses
+const topActresses = async function(req, res) {
   query = `
     SELECT name, profile_path
     from person_details
     WHERE gender = '1'
+    AND profile_path is not null
     AND known_for_department LIKE 'Act%'
-    ORDER BY CAST(popularity AS float) DESC
+    ORDER BY popularity DESC
     LIMIT 10;
   `
   connection.query(
@@ -90,8 +93,57 @@ const top_actresses = async function(req, res) {
       res.json({});
     } else {
       res.json(data.rows.map(row => ({
-        src: row.profile_path ? picture_url + picture_size + row.profile_path : default_picture,
+        src: picture_url + picture_size + row.profile_path,
         title: row.name
+      })));
+    }
+  });
+}
+
+// Route 4: GET /api/top-combos
+const topCombos = async function(req, res) {
+  query = `
+    with cast_director as (
+        select movie_cast.person_id as cast_id,
+                movie_cast.name as actor_name,
+                movie_cast.profile_path as actor_image,
+                movie_crew.person_id as director_id,
+                movie_crew.name as director_name,
+                movie_crew.profile_path as director_image,
+                movie_details.vote_average as rating
+        from movie_cast
+        join movie_crew
+        on movie_cast.movie_id = movie_crew.movie_id
+        join movie_details
+        on movie_cast.movie_id = movie_details.id
+        where movie_crew.job = 'Director'
+        and movie_cast.profile_path is not null
+        and movie_crew.profile_path is not null
+    ),
+    best_combo as (
+        select distinct on (director_id)
+            actor_name, actor_image, director_name, director_id, director_image, avg(rating) as average_rating
+        from cast_director
+        group by actor_name, actor_image, director_name, director_id, director_image
+        having count(rating) > 2
+        order by director_id desc
+    )
+    select actor_name, actor_image, director_name, director_image
+    from best_combo
+    order by average_rating desc
+    limit 10;
+  `
+  connection.query(
+    query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows.map(row => ({
+        actorName: row.actor_name,
+        actorImage: picture_url + picture_size + row.actor_image,
+        directorName: row.director_name,
+        directorImage: picture_url + picture_size + row.director_image
       })));
     }
   });
@@ -206,7 +258,8 @@ const getMovies = async function(req, res) {
 
 module.exports = {
   getMovies,  // Bowen Xiang added on Nov 27
-  top_directors,
-  top_actors,
-  top_actresses,
+  topDirectors,
+  topActors,
+  topActresses,
+  topCombos,
 }

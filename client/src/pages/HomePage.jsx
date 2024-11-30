@@ -31,89 +31,6 @@ const profiles = [
   { id: "11", name: "Anne Ortha" },
 ];
 
-const pairingsData = [
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 1",
-    actorName: "Actor 1",
-  },
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 2",
-    actorName: "Actor 2",
-  },
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 3",
-    actorName: "Actor 3",
-  },
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 4",
-    actorName: "Actor 4",
-  },
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 5",
-    actorName: "Actor 5",
-  },
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 6",
-    actorName: "Actor 6",
-  },
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 7",
-    actorName: "Actor 7",
-  },
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 8",
-    actorName: "Actor 8",
-  },
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 9",
-    actorName: "Actor 9",
-  },
-  {
-    directorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    actorImage:
-      "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png",
-    directorName: "Director 10",
-    actorName: "Actor 10",
-  },
-];
-
 export default function HomePage() {
   {
     /*Temporary search result*/
@@ -124,11 +41,13 @@ export default function HomePage() {
   const [directors, setDirectors] = useState([]);
   const [maleActors, setMaleActors] = useState([]);
   const [femaleActors, setFemaleActors] = useState([]);
+  const [pairingsData, setPairingsData] = useState([]);
 
   useEffect(() => {
     fetchData("top-directors", setDirectors);
     fetchData("top-actors", setMaleActors);
     fetchData("top-actresses", setFemaleActors);
+    fetchData("top-combos", setPairingsData);
   }, []);
 
   const handleChange = (e) => {
