@@ -14,6 +14,15 @@ function PairImageCard({ directorImage, actorImage, directorName, actorName }) {
         }}
       />
 
+      {/* Director Name */}
+      <div className="flex w-[162px] flex-col gap-[8px] items-start shrink-0 flex-nowrap relative z-[2]">
+        <div className="flex w-[162px] items-start shrink-0 flex-nowrap relative z-[3]">
+          <span className="h-[22px] shrink-0 basis-auto font-['Inter'] text-[16px] font-semibold leading-[22px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[4]">
+            {directorName}
+          </span>
+        </div>
+      </div>
+
       {/* Actor Image */}
       <div
         className="flex h-[247px] flex-col justify-center items-center self-stretch shrink-0 flex-nowrap bg-[rgba(227,227,227,0.2)] bg-cover bg-no-repeat relative overflow-hidden z-[1]"
@@ -24,16 +33,13 @@ function PairImageCard({ directorImage, actorImage, directorName, actorName }) {
         }}
       />
 
-      {/* Names */}
+      {/* Actor Name */}
       <div className="flex w-[162px] flex-col gap-[8px] items-start shrink-0 flex-nowrap relative z-[2]">
         <div className="flex w-[162px] items-start shrink-0 flex-nowrap relative z-[3]">
           <span className="h-[22px] shrink-0 basis-auto font-['Inter'] text-[16px] font-semibold leading-[22px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[4]">
-            {directorName}
+            {actorName}
           </span>
         </div>
-        <span className="h-[22px] shrink-0 basis-auto font-['Inter'] text-[16px] font-semibold leading-[22px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[5]">
-          {actorName}
-        </span>
       </div>
     </div>
   );
