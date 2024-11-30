@@ -1,4 +1,4 @@
-import ImageCard from "./ImageCard";
+import ImageCard from "./ImageCard/ImageCard";
 import PropTypes from "prop-types";
 
 const Grid = ({ images }) => {
