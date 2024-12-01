@@ -27,6 +27,12 @@ app.get('/api/top-actresses', routes.topActresses);
 // Route to get top actor-director combos
 app.get('/api/top-combos', routes.topCombos);
 
+// Route to get person details
+app.get('/api/persons', routes.getPersons); 
+
+// Route to get random pic
+app.get('/api/random', routes.getRandom); 
+
 // Start the server
 app.listen(config.server_port, () => {
   console.log(`Server is running on http://${config.server_host}:${config.server_port}/`);

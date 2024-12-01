@@ -204,11 +204,13 @@ const getMovies = async function(req, res) {
               id,
               COALESCE(poster_path, '') as image,
               title as name,
-              ROUND(CAST(popularity as numeric), 3) as popularity
+              popularity
+              -- // ROUND(CAST(popularity as numeric), 3) as popularity
           FROM movie_details
           WHERE 
               title ~ '^[A-Za-z0-9]'  -- Start with alphanumeric character
-              AND CAST(popularity AS numeric) > 0.5     -- Fixed: Cast popularity to numeric
+              AND popularity > 0.5
+              -- AND CAST(popularity AS numeric) > 0.5     -- Fixed: Cast popularity to numeric
               AND title != ''          -- Exclude empty titles
           ORDER BY 
               CASE WHEN poster_path IS NULL THEN 1 ELSE 0 END,  -- Movies with images first
@@ -222,7 +224,8 @@ const getMovies = async function(req, res) {
           FROM movie_details
           WHERE 
               title ~ '^[A-Za-z0-9]'
-              AND CAST(popularity AS numeric) > 0.5
+              AND popularity > 0.5
+              -- AND CAST(popularity AS numeric) > 0.5
               AND title != ''
       `;
 
@@ -255,10 +258,115 @@ const getMovies = async function(req, res) {
   }
 }
 
+// Route 7: GET /api/random
+const getRandom = async function(req, res) {
+  const query = `
+    SELECT id,
+    poster_path
+    FROM movie_details
+    WHERE poster_path IS NOT NULL
+    ORDER BY RANDOM()
+    LIMIT 1;
+  `;
+
+  connection.query(query, (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: "Internal server error" });
+    } else if (data.length === 0) {
+      res.status(404).json({ error: "No picture found" });
+    } else {
+      const row = data[0];
+      res.json({
+        src: make_picture_url(picture_size, row.poster_path)
+      });
+    }
+  });
+};
+
+// Route 8: GET /api/persons
+const getPersons = async (req, res) => {
+  try {
+      // Parse and validate query parameters
+      const page = Math.max(parseInt(req.query.page) || 1, 1); // Ensure page >= 1
+      const pageSize = Math.max(parseInt(req.query.pageSize) || 16, 1); // Ensure pageSize >= 1
+      const filter = req.query.filter || 'name_asc';
+
+      const validFilters = {
+          name_asc: 'name ASC',
+          name_desc: 'name DESC',
+          popularity_asc: 'popularity ASC',
+          popularity_desc: 'popularity DESC',
+      };
+
+      const orderClause = validFilters[filter];
+      if (!orderClause) {
+          return res.status(400).json({ error: 'Invalid filter value' });
+      }
+
+      // Calculate offset
+      const offset = (page - 1) * pageSize;
+
+      // SQL query with placeholders
+      const queryText = `
+          SELECT 
+              id,
+              COALESCE(profile_path, '') AS image,
+              name,
+              popularity
+          FROM person_details
+          WHERE 
+              name ~ '^[A-Za-z0-9]'  -- Start with alphanumeric character
+              AND popularity > 0.5   -- Minimum popularity threshold
+          ORDER BY 
+              CASE WHEN profile_path IS NULL THEN 1 ELSE 0 END,  -- Persons with images first
+              ${orderClause}
+          LIMIT $1 OFFSET $2
+      `;
+
+      const countText = `
+          SELECT COUNT(*) AS total
+          FROM person_details
+          WHERE 
+              name ~ '^[A-Za-z0-9]'
+              AND popularity > 0.5
+      `;
+
+      // Execute queries in parallel
+      const [personsResult, countResult] = await Promise.all([
+          connection.query(queryText, [pageSize, offset]),
+          connection.query(countText),
+      ]);
+
+      // Extract total items and calculate total pages
+      const totalItems = parseInt(countResult.rows[0].total, 10);
+      const totalPages = Math.ceil(totalItems / pageSize);
+
+      // Prepare response
+      res.json({
+          results: personsResult.rows,
+          currentPage: page,
+          totalPages,
+          totalItems,
+      });
+
+  } catch (err) {
+      console.error('Error fetching person details:', err);
+      res.status(500).json({
+          error: 'Internal server error',
+          details: err.message,
+      });
+  }
+};
+
+
+
 
 
 module.exports = {
   getMovies,  // Bowen Xiang added on Nov 27
+  getPersons,
+  getRandom,
   topDirectors,
   topActors,
   topActresses,
