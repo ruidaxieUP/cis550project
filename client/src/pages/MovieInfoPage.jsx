@@ -93,117 +93,58 @@ const castData = [
   },
 ];
 
-const mockMoreLikeThis = [
-  {
-    data: [
-      {
-        id: 1,
-        image: "https://via.placeholder.com/241x247",
-        title: "Movie 1",
-        rating: 9.3,
-        genres: [
-          { id: 18, name: "Drama" },
-          { id: 80, name: "Crime" },
-        ],
-      },
-      {
-        id: 2,
-        image: "https://via.placeholder.com/241x247",
-        title: "Movie 2",
-        rating: 9.2,
-        genres: [
-          { id: 80, name: "Crime" },
-          { id: 18, name: "Drama" },
-        ],
-      },
-      {
-        id: 3,
-        image: "https://via.placeholder.com/241x247",
-        title: "Movie 3",
-        rating: 9.0,
-        genres: [
-          { id: 28, name: "Action" },
-          { id: 80, name: "Crime" },
-          { id: 18, name: "Drama" },
-        ],
-      },
-      {
-        id: 4,
-        image: "https://via.placeholder.com/241x247",
-        title: "Movie 4",
-        rating: 9.0,
-        genres: [{ id: 18, name: "Drama" }],
-      },
-      {
-        id: 5,
-        image: "https://via.placeholder.com/241x247",
-        title: "Movie 5",
-        rating: 8.9,
-        genres: [
-          { id: 18, name: "Drama" },
-          { id: 36, name: "History" },
-        ],
-      },
-      {
-        id: 6,
-        image: "https://via.placeholder.com/241x247",
-        title: "Movie 6",
-        rating: 8.9,
-        genres: [
-          { id: 12, name: "Adventure" },
-          { id: 14, name: "Fantasy" },
-          { id: 28, name: "Action" },
-        ],
-      },
-      {
-        id: 7,
-        image: "https://via.placeholder.com/241x247",
-        title: "Movie 7",
-        rating: 8.9,
-        genres: [
-          { id: 80, name: "Crime" },
-          { id: 35, name: "Comedy" },
-        ],
-      },
-      {
-        id: 8,
-        image: "https://via.placeholder.com/241x247",
-        title: "Movie 8",
-        rating: 8.8,
-        genres: [
-          { id: 37, name: "Western" },
-          { id: 28, name: "Action" },
-        ],
-      },
-    ],
-    pagination: {
-      currentPage: 1,
-      totalPages: 8,
-    },
-  },
-];
+// Temporary Mock API, backend will be implemented later
+const mockMoreLikeThis = Array.from({ length: 180 }, (_, index) => ({
+  id: index + 1,
+  image: "https://via.placeholder.com/241x247",
+  title: `Movie ${index + 1}`,
+  rating: (Math.random() * 4 + 6).toFixed(1), 
+  genres: [
+    { id: 18, name: "Drama" },
+    { id: 80, name: "Crime" },
+  ],
+}));
+
+// Temporary Mock API, backend will be implemented later
+function fetchMockMoreLikeThis(page = 1, pageSize = 8) {
+  const totalItems = mockMoreLikeThis.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalItems);
+
+  const result = mockMoreLikeThis.slice(startIndex, endIndex);
+
+  return {
+    result,
+    currentPage: page,
+    totalPages,
+    totalItems,
+  };
+}
 
 export default function MovieInfoPage() {
   const [movieData, setMovieData] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1); 
-  const [totalPages, setTotalPages] = useState(1); 
-  const [movies, setMovies] = useState([]); 
+  const [movies, setMovies] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    // Simulate fetching movie data and paginated data
     setTimeout(() => {
       setMovieData(mockMovieData);
-      const { data, pagination } = mockMoreLikeThis[0];
-      setMovies(data); 
-      setTotalPages(pagination.totalPages); 
+      loadPageData(currentPage);
     }, 500);
   }, []);
 
+  const loadPageData = (page) => {
+    const { result, currentPage, totalPages } = fetchMockMoreLikeThis(page);
+    setMovies(result);
+    setCurrentPage(currentPage);
+    setTotalPages(totalPages);
+  };
+
   const handlePageChange = (page) => {
-    setCurrentPage(page);
-    setTimeout(() => {
-      const { data } = mockMoreLikeThis[0]; 
-      setMovies(data);
-    }, 500);
+    loadPageData(page);
   };
 
   if (!movieData) {
@@ -229,7 +170,7 @@ export default function MovieInfoPage() {
   return (
     <div className="main-container flex flex-col items-center gap-16 py-[64px]">
       {/* Movie Info Section */}
-      <div className={`flex gap-[64px] items-start w-[1024px]`}>
+      <div className="flex gap-[64px] items-start w-[1024px]">
         {/* Movie Poster */}
         <div
           className="flex w-[403px] h-[604px] flex-col justify-center items-center shrink-0 flex-nowrap bg-cover bg-no-repeat relative overflow-hidden"
@@ -299,7 +240,7 @@ export default function MovieInfoPage() {
       </div>
 
       {/* Top Cast Section */}
-      <div className={`flex flex-col gap-4 w-[1024px]`}>
+      <div className="flex flex-col gap-4 w-[1024px]">
         <span className="text-[24px] font-semibold tracking-[-0.48px] text-[#000]">
           Top Cast
         </span>
@@ -316,7 +257,7 @@ export default function MovieInfoPage() {
       </div>
 
       {/* More Like This Section */}
-      <div className={`flex flex-col gap-4 w-[1024px]`}>
+      <div className="flex flex-col gap-4 w-[1024px]">
         <span className="text-[24px] font-semibold tracking-[-0.48px] text-[#000]">
           More Like This
         </span>

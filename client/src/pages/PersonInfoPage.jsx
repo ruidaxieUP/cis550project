@@ -3,6 +3,7 @@ import ImageSlider from "../components/ImageSlider";
 import GenresContainer from "../components/GenresContainer";
 import Card from "../components/ImageCard/KnownForCard";
 import Pagination from "../components/Pagination";
+
 // mock data
 const mockPersonData = {
   id: 976,
