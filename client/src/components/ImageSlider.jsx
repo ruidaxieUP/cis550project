@@ -2,8 +2,8 @@ import PropTypes from "prop-types";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import ImageCard from "./ImageCard"; 
-import PairImageCard from "./PairImageCard";
+import ImageCard from "./ImageCard/ImageCard"; 
+import PairImageCard from "./ImageCard/PairImageCard";
 
 function ImageSlider({ title, data, sliderSettings }) {
   return (
