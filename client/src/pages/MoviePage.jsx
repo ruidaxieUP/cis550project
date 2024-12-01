@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Card from "../components//ImageCard/RecImageCard";
 import FilterBar from "../components/FilterBar";
 import Pagination from "../components/Pagination";
+import { fetchData } from "./utils";
 
 export default function MoivePage() {
   const [filter, setFilter] = useState("name_asc");

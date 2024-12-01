@@ -22,9 +22,10 @@ const connection = new Pool({
 });
 connection.connect((err) => err && console.log(err));
 
-/******************
- * WARM UP ROUTES *
- ******************/
+function make_picture_url(size, fname) {
+  return picture_url + size + fname;
+}
+
 
 // Route 1: GET /api/top-directors
 const topDirectors = async function(req, res) {
@@ -43,7 +44,7 @@ const topDirectors = async function(req, res) {
       res.json({});
     } else {
       res.json(data.rows.map(row => ({
-        src: picture_url + picture_size + row.profile_path,
+        src: make_picture_url(picture_size, row.profile_path),
         title: row.name
       })));
     }
@@ -68,7 +69,7 @@ const topActors = async function(req, res) {
       res.json({});
     } else {
       res.json(data.rows.map(row => ({
-        src: picture_url + picture_size + row.profile_path,
+        src: make_picture_url(picture_size, row.profile_path),
         title: row.name
       })));
     }
@@ -93,7 +94,7 @@ const topActresses = async function(req, res) {
       res.json({});
     } else {
       res.json(data.rows.map(row => ({
-        src: picture_url + picture_size + row.profile_path,
+        src: make_picture_url(picture_size, row.profile_path),
         title: row.name
       })));
     }
@@ -141,9 +142,9 @@ const topCombos = async function(req, res) {
     } else {
       res.json(data.rows.map(row => ({
         actorName: row.actor_name,
-        actorImage: picture_url + picture_size + row.actor_image,
+        actorImage: make_picture_url(picture_size, row.actor_image),
         directorName: row.director_name,
-        directorImage: picture_url + picture_size + row.director_image
+        directorImage: make_picture_url(picture_size, row.director_image),
       })));
     }
   });
