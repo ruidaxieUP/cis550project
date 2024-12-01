@@ -16,13 +16,16 @@ app.use(cors());
 app.use(express.json());
 
 // Route to get top 10 directors
-app.get('/api/top-directors', routes.top_directors);
+app.get('/api/top-directors', routes.topDirectors);
 
 // Route to get top 10 male actors
-app.get('/api/top-actors', routes.top_actors);
+app.get('/api/top-actors', routes.topActors);
 
 // Route to get top 10 female actors
-app.get('/api/top-actresses', routes.top_actresses);
+app.get('/api/top-actresses', routes.topActresses);
+
+// Route to get top actor-director combos
+app.get('/api/top-combos', routes.topCombos);
 
 // Start the server
 app.listen(config.server_port, () => {
