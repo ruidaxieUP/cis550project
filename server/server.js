@@ -28,10 +28,13 @@ app.get('/api/top-actresses', routes.topActresses);
 app.get('/api/top-combos', routes.topCombos);
 
 // Route to get person details
-app.get('/api/persons', routes.getPersons); 
+app.get('/api/persons', routes.getPersons);
 
 // Route to get random pic
-app.get('/api/random', routes.getRandom); 
+app.get('/api/random', routes.getRandom);
+
+// Route to get movie info
+app.get('/api/movies/:movie_id', routes.getMovieInfo);
 
 // Start the server
 app.listen(config.server_port, () => {

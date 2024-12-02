@@ -359,7 +359,64 @@ const getPersons = async (req, res) => {
   }
 };
 
-
+// Route 9: GET /api/movies/:id
+const getMovieInfo = async function(req, res) {
+  const movie_id = req.params.id;
+  query = `
+    with top_5_cast as
+        (select movie_id, name
+        from movie_cast
+        where movie_id = ${movie_id}
+        order by popularity desc
+        limit 5),
+    cast_names as
+        (select movie_id, STRING_AGG(name, ', ') AS names
+        from top_5_cast
+        group by movie_id),
+    director_names as
+        (select movie_id, STRING_AGG(name, ', ') AS names
+        from movie_crew
+        where job in ('Director', 'Co-Director')
+        and movie_id = ${movie_id}
+        group by movie_id)
+    select id as movie_id, poster_path, title as movie_name,
+            vote_average as rating, vote_count as votes, status,
+            director_names.names as directors,
+            cast_names.names as casts,
+            extract (year from release_date) as production_year,
+            TO_CHAR(release_date, 'YYYY-MM-DD') AS release_date,
+            runtime as duration,
+            revenue, budget, overview
+    from director_names
+    join cast_names on director_names.movie_id = cast_names.movie_id
+    join movie_details on cast_names.movie_id = movie_details.id
+    order by popularity desc;
+  `
+  connection.query(
+    query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      row = data.rows[0];
+      res.json({
+        poster_path: make_picture_url(picture_size, row.poster_path),
+        movie_name: row.movie_name,
+        production_year: row.production_year,
+        rating: parseFloat(row.rating),
+        votes: row.votes,
+        status: row.status,
+        director: row.directors,
+        cast: row.casts,
+        released_date: row.released_date,
+        duration: row.duration,
+        budget: row.budget,
+        revenue: row.revenue,
+        overview: row.overview,
+      });
+    }
+  });
+}
 
 
 
@@ -371,4 +428,5 @@ module.exports = {
   topActors,
   topActresses,
   topCombos,
+  getMovieInfo,
 }
