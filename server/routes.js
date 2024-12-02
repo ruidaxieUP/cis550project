@@ -359,9 +359,9 @@ const getPersons = async (req, res) => {
   }
 };
 
-// Route 9: GET /api/movies/:id
+// Route 9: GET /api/movies/:movie_id
 const getMovieInfo = async function(req, res) {
-  const movie_id = req.params.id;
+  const movie_id = req.params.movie_id;
   query = `
     with top_5_cast as
         (select movie_id, name
