@@ -259,30 +259,31 @@ const getMovies = async function(req, res) {
 }
 
 // Route 7: GET /api/random
-const getRandom = async function(req, res) {
+const getRandom = async function (req, res) {
   const query = `
     SELECT id,
-    poster_path
+           backdrop_path
     FROM movie_details
-    WHERE poster_path IS NOT NULL
+    WHERE backdrop_path IS NOT NULL
     ORDER BY RANDOM()
     LIMIT 1;
   `;
 
   connection.query(query, (err, data) => {
     if (err) {
-      console.error(err);
-      res.status(500).json({ error: "Internal server error" });
-    } else if (data.length === 0) {
-      res.status(404).json({ error: "No picture found" });
+      console.error('Error executing query:', err);
+      res.status(500).json({ error: 'Internal server error' });
+    } else if (data.rows.length === 0) {
+      res.status(404).json({ error: 'No picture found' });
     } else {
-      const row = data[0];
+      const row = data.rows[0];
       res.json({
-        src: make_picture_url(picture_size, row.poster_path)
+        src: make_picture_url(picture_size, row.backdrop_path),
       });
     }
   });
 };
+
 
 // Route 8: GET /api/persons
 const getPersons = async (req, res) => {

@@ -34,11 +34,33 @@ export default function HomePage() {
   const [femaleActors, setFemaleActors] = useState([]);
   const [pairingsData, setPairingsData] = useState([]);
 
+  const [backgroundImage, setBackgroundImage] = useState("");
+
   useEffect(() => {
     fetchData("top-directors", setDirectors);
     fetchData("top-actors", setMaleActors);
     fetchData("top-actresses", setFemaleActors);
     fetchData("top-combos", setPairingsData);
+  }, []);
+
+  // Fetch the background once
+  useEffect(() => {
+    let isMounted = true; // Guard to prevent state updates on unmounted components
+    const fetchBackgroundImage = async () => {
+      try {
+        fetchData("random", (data) => {
+          if (isMounted && data?.src) {
+            setBackgroundImage(data.src); 
+          }
+        });
+      } catch (error) {
+        console.error("Failed to fetch background image:", error);
+      }
+    };
+    fetchBackgroundImage();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleChange = (e) => {
@@ -68,7 +90,7 @@ export default function HomePage() {
             left: 0,
             width: "100%",
             height: "100%",
-            backgroundImage: `url('https://image.tmdb.org/t/p/w500/hQ4pYsIbP22TMXOUdSfC2mjWrO0.jpg')`,
+            backgroundImage: `url(${backgroundImage})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",
