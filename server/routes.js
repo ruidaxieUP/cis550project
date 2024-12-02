@@ -426,9 +426,9 @@ const getMovieCasts = async function(req, res) {
     from movie_cast
     join movie_details
     on movie_cast.movie_id = movie_details.id
-    where movie_id = 319
+    where movie_id = ${movie_id}
     order by movie_cast.popularity desc
-    limit 9;
+    limit 10;
   `
   connection.query(
     query, (err, data) => {
