@@ -418,6 +418,33 @@ const getMovieInfo = async function(req, res) {
   });
 }
 
+// Route 10: GET /api/movie-casts/:movie_id
+const getMovieCasts = async function(req, res) {
+  const movie_id = req.params.movie_id;
+  query = `
+    select profile_path, character, name
+    from movie_cast
+    join movie_details
+    on movie_cast.movie_id = movie_details.id
+    where movie_id = 319
+    order by movie_cast.popularity desc
+    limit 9;
+  `
+  connection.query(
+    query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows.map(row => ({
+        image: make_picture_url(picture_size, row.profile_path),
+        characterName: row.character,
+        actorName: row.name,
+      })));
+    }
+  });
+};
+
 
 
 module.exports = {
@@ -429,4 +456,5 @@ module.exports = {
   topActresses,
   topCombos,
   getMovieInfo,
+  getMovieCasts,
 }

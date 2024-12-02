@@ -36,6 +36,9 @@ app.get('/api/random', routes.getRandom);
 // Route to get movie info
 app.get('/api/movies/:movie_id', routes.getMovieInfo);
 
+// Route to get movie casts
+app.get('/api/movie-casts/:movie_id', routes.getMovieCasts);
+
 // Start the server
 app.listen(config.server_port, () => {
   console.log(`Server is running on http://${config.server_host}:${config.server_port}/`);

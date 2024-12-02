@@ -120,6 +120,7 @@ function fetchMockMoreLikeThis(page = 1, pageSize = 8) {
 
 export default function MovieInfoPage() {
   const [movieData, setMovieData] = useState(null);
+  const [castData, setCastData] = useState([]);
   const [movies, setMovies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -129,6 +130,7 @@ export default function MovieInfoPage() {
     // Simulate fetching movie data and paginated data
     setTimeout(() => {
       fetchDataById("movies", movie_id, setMovieData);
+      fetchDataById("movie-casts", movie_id, setCastData);
       loadPageData(currentPage);
     }, 500);
   }, []);
