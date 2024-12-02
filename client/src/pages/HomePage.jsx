@@ -34,14 +34,19 @@ export default function HomePage() {
   const [femaleActors, setFemaleActors] = useState([]);
   const [pairingsData, setPairingsData] = useState([]);
 
-  const [backgroundImage, setBackgroundImage] = useState("");
+  const [backgroundImage, setBackgroundImage] = useState("https://via.placeholder.com/1920x1080" );
 
   useEffect(() => {
     fetchData("top-directors", setDirectors);
     fetchData("top-actors", setMaleActors);
     fetchData("top-actresses", setFemaleActors);
     fetchData("top-combos", setPairingsData);
-    fetchData("random", (data) => setBackgroundImage(data.src));
+    fetchData("random", (data) => {
+      if (data?.src) {
+        setBackgroundImage(data.src);
+      }
+    });
+    
   }, []);
 
   const handleChange = (e) => {
