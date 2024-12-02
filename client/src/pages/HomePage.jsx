@@ -34,19 +34,33 @@ export default function HomePage() {
   const [femaleActors, setFemaleActors] = useState([]);
   const [pairingsData, setPairingsData] = useState([]);
 
-  const [backgroundImage, setBackgroundImage] = useState("https://via.placeholder.com/1920x1080" );
+  const [backgroundImage, setBackgroundImage] = useState("");
 
   useEffect(() => {
     fetchData("top-directors", setDirectors);
     fetchData("top-actors", setMaleActors);
     fetchData("top-actresses", setFemaleActors);
     fetchData("top-combos", setPairingsData);
-    fetchData("random", (data) => {
-      if (data?.src) {
-        setBackgroundImage(data.src);
+  }, []);
+
+  // Fetch the background once
+  useEffect(() => {
+    let isMounted = true; // Guard to prevent state updates on unmounted components
+    const fetchBackgroundImage = async () => {
+      try {
+        fetchData("random", (data) => {
+          if (isMounted && data?.src) {
+            setBackgroundImage(data.src); 
+          }
+        });
+      } catch (error) {
+        console.error("Failed to fetch background image:", error);
       }
-    });
-    
+    };
+    fetchBackgroundImage();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleChange = (e) => {
