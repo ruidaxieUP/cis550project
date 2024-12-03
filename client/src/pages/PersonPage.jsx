@@ -2,36 +2,47 @@ import { useState, useEffect } from "react";
 import Card from "../components//ImageCard/RecImageCard";
 import FilterBar from "../components/FilterBar";
 import Pagination from "../components/Pagination";
+import { fetchData } from "./utils";
 
 export default function PersonPage() {
   const [filter, setFilter] = useState("name_asc");
   const [currentPage, setCurrentPage] = useState(1);
-  const [data, setData] = useState([]); // Holds the paginated data
+  const [data, setData] = useState([]); 
   const [totalPages, setTotalPages] = useState(1); 
 
   const pageSize = 16; 
 
-  // TODO Mock server-side data, will let the server handle this in the future
-  const fullData = Array.from({ length: 114 }, (_, index) => ({
-    id: index,
-    image: "https://via.placeholder.com/150",
-    title: `Person ${index + 1}`,
-    rating: (Math.random() * 10).toFixed(1),
-  }));
+  // // TODO Mock server-side data, will let the server handle this in the future
+  // const fullData = Array.from({ length: 114 }, (_, index) => ({
+  //   id: index,
+  //   image: "https://via.placeholder.com/150",
+  //   title: `Person ${index + 1}`,
+  //   rating: (Math.random() * 10).toFixed(1),
+  // }));
 
+  // // Fetch data
+  // useEffect(() => {
+  //   const fetchPaginatedData = () => {
+  //     const startIndex = (currentPage - 1) * pageSize;
+  //     const paginatedData = fullData.slice(startIndex, startIndex + pageSize);
+  
+  //     setTotalPages(Math.ceil(fullData.length / pageSize));
+  //     setData(paginatedData);
+  //   };
+  
+  //   fetchPaginatedData();
+  // }, [currentPage, filter]); //TODO - Add filter to dependency array
+  
   // Fetch data
   useEffect(() => {
-    const fetchPaginatedData = () => {
-      const startIndex = (currentPage - 1) * pageSize;
-      const paginatedData = fullData.slice(startIndex, startIndex + pageSize);
-  
-      setTotalPages(Math.ceil(fullData.length / pageSize));
-      setData(paginatedData);
-    };
-  
-    fetchPaginatedData();
-  }, [currentPage, filter]); //TODO - Add filter to dependency array
-  
+    fetchData(
+      `persons?page=${currentPage}&pageSize=${pageSize}&filter=${filter}`,
+      (result) => {
+        setData(result.results);
+        setTotalPages(result.totalPages);
+      }
+    );
+  }, [currentPage, filter]);
 
    // Reset to first page on filter change
   const handleFilterChange = (newFilter) => {
@@ -69,7 +80,7 @@ export default function PersonPage() {
           {/* Grid of Cards */}
           <div className="grid grid-cols-4 gap-4">
             {data.map((item) => (
-              <Card key={item.id} image={item.image} title={item.title} rating={item.rating} />
+              <Card key={item.id} image={item.image} title={item.name} rating={parseFloat(item.popularity)} />
             ))}
           </div>
 
