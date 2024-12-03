@@ -342,9 +342,17 @@ const getPersons = async (req, res) => {
       const totalItems = parseInt(countResult.rows[0].total, 10);
       const totalPages = Math.ceil(totalItems / pageSize);
 
+      // Transform image paths to URLs
+      const transformedResults = personsResult.rows.map(person => ({
+        id: person.id,
+        image: make_picture_url(picture_size, person.image),
+        name: person.name,
+        popularity: person.popularity,
+    }));
+
       // Prepare response
       res.json({
-          results: personsResult.rows,
+          results: transformedResults,
           currentPage: page,
           totalPages,
           totalItems,
