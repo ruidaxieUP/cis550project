@@ -23,13 +23,14 @@ const mockMoreLikeThis = Array.from({ length: 180 }, (_, index) => ({
 
 // Temporary Mock API, backend will be implemented later
 function fetchMoreLikeThis(moreLikeThis, page = 1, pageSize = 8) {
+  console.log('moreLikeThis', moreLikeThis);
   const totalItems = moreLikeThis.length;
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (page - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalItems);
 
   const result = moreLikeThis.slice(startIndex, endIndex);
-
+  console.log('result', result);
   return {
     result,
     currentPage: page,

@@ -413,7 +413,7 @@ const getMovieInfo = async function (req, res) {
 const getMovieCasts = async function (req, res) {
   const movie_id = req.params.movie_id;
   query = `
-    select profile_path, character, name
+    select person_id, profile_path, character, name
     from movie_cast
     join movie_details
     on movie_cast.movie_id = movie_details.id
@@ -428,6 +428,7 @@ const getMovieCasts = async function (req, res) {
     } else {
       res.json(
         data.rows.map((row) => ({
+          id: row.person_id,
           image: make_picture_url(picture_size, row.profile_path),
           characterName: row.character,
           actorName: row.name,
@@ -496,7 +497,7 @@ const getSimilarMovies = async function (req, res) {
     join genres
     on movie_genres.genre_id = genres.id
     order by vote_average desc
-    limit 40;
+    limit 100;
   `;
   connection.query(query, (err, data) => {
     if (err) {
