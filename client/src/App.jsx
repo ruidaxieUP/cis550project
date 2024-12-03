@@ -15,8 +15,8 @@ function App() {
       <NavBar />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/person" element={<PersonPage />} />
-        <Route path="/person/:person_id" element={<PersonInfoPage />} />
+        <Route path="/persons" element={<PersonPage />} />
+        <Route path="/persons/:person_id" element={<PersonInfoPage />} />
         <Route path="/movies" element={<MoviePage />} />
         <Route path="/movies/:movie_id" element={<MovieInfoPage />} />
         <Route path="/contact" element={<ContactPage />} />

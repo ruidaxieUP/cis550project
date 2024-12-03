@@ -525,6 +525,149 @@ const getSimilarMovies = async function (req, res) {
   });
 };
 
+// Route 13: GET /api/persons/:person_id
+const getPersonInfo = async function (req, res) {
+  const person_id = req.params.person_id;
+  query = `
+    select id, name, profile_path, biography, known_for_department
+    from person_details
+    where id = ${person_id};
+  `;
+  connection.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      row = data.rows[0];
+      res.json({
+          id: row.id,
+          name: row.name,
+          imagePath: make_picture_url(picture_size, row.profile_path),
+          knownForDepartment: row.known_for_department,
+          bio: row.biography
+      });
+    }
+  });
+};
+
+// Route 12: GET /api/person-genres/:movie_id
+const getPersonGenres = async function (req, res) {
+  const person_id = req.params.person_id;
+  query = `
+    with cast_crew as (
+        select name, profile_path, movie_id, person_id, popularity
+        from movie_cast
+        union all
+        select name, profile_path, movie_id, person_id, popularity
+        from movie_crew
+    )
+    select genre_id, genres.name, count(genres.name) as count
+    from cast_crew
+    join movie_genres
+    on cast_crew.movie_id = movie_genres.movie_id
+    join genres
+    on movie_genres.genre_id = genres.id
+    where person_id = ${person_id}
+    group by genre_id, genres.name
+    order by count desc
+    limit 3;
+  `;
+  connection.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(
+        data.rows.map((row) => ({
+          id: row.genre_id,
+          name: row.name,
+        }))
+      );
+    }
+  });
+};
+
+// Route 13: GET /api/person-known-for/:person_id
+const getPersonKnownFor = async function (req, res) {
+  const person_id = req.params.person_id;
+  query = `
+    with cast_crew as (
+        select name, character, movie_id, person_id, popularity, profile_path
+        from movie_cast
+        union all
+        select name, 'Director' as character, movie_id, person_id, popularity, profile_path
+        from movie_crew
+    )
+    select poster_path, movie_details.title, character, vote_average
+    from cast_crew
+    join movie_details
+    on cast_crew.movie_id = movie_details.id
+    where person_id = ${person_id}
+    order by movie_details.popularity desc;
+  `;
+  connection.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(
+        data.rows.map((row) => ({
+          posterPath: make_picture_url(picture_size, row.poster_path),
+          movieName: row.title,
+          characterName: row.character,
+          rating: row.vote_average,
+        }))
+      );
+    }
+  });
+};
+
+// Route 14: GET /api/person-known-for/:person_id
+const getPersonCollaborators = async function (req, res) {
+  const person_id = req.params.person_id;
+  query = `
+    with cast_crew as (
+        select name, profile_path, movie_id, person_id, popularity
+        from movie_cast
+        union all
+        select name, profile_path, movie_id, person_id, popularity
+        from movie_crew
+    ),
+    top_collaborators as (
+        select name, profile_path, popularity
+        from cast_crew
+        where cast_crew.person_id <> ${person_id}
+        and movie_id in (select movie_id
+                      from cast_crew
+                      where person_id = ${person_id})
+    ),
+    ordered_rows AS (
+        SELECT
+            *,
+            ROW_NUMBER() OVER (PARTITION BY name) AS row_num
+        FROM top_collaborators
+    )
+    SELECT name, profile_path
+    FROM ordered_rows
+    where row_num = 1
+    order by popularity desc
+    limit 10;
+  `;
+  connection.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(
+        data.rows.map((row) => ({
+          src: make_picture_url(picture_size, row.profile_path),
+          title: row.name,
+        }))
+      );
+    }
+  });
+};
+
 module.exports = {
   getMovies, // Bowen Xiang added on Nov 27
   getPersons,
@@ -537,4 +680,8 @@ module.exports = {
   getMovieCasts,
   getMovieGenres,
   getSimilarMovies,
+  getPersonInfo,
+  getPersonGenres,
+  getPersonKnownFor,
+  getPersonCollaborators,
 };
