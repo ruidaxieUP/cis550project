@@ -472,8 +472,8 @@ const getSimilarMovies = async function (req, res) {
   const pageSize = parseInt(req.query.pageSize) || 8;
   const offset = (page - 1) * pageSize;
 
-  query = `
-  WITH this_movie_genres AS (
+  const query = `
+    WITH this_movie_genres AS (
         SELECT genre_id
         FROM movie_genres
         WHERE movie_id = ${movie_id}
@@ -493,43 +493,50 @@ const getSimilarMovies = async function (req, res) {
         WHERE m.matching_genres_count = (SELECT COUNT(*) FROM this_movie_genres)
         OR m.matching_genres_count >= 3
     )
-    select movie_genres.movie_id, title, vote_average, poster_path, genre_id, genres.name
-    from similar_movie_ids
-    join movie_details
-    on similar_movie_ids.movie_id = movie_details.id
-    join movie_genres
-    on movie_details.id = movie_genres.movie_id
-    join genres
-    on movie_genres.genre_id = genres.id
-    order by vote_average desc
-    limit ${pageSize * 2} offset ${offset};
-`;
-
-  const countQuery = `
-  WITH this_movie_genres AS (
-        SELECT genre_id
-        FROM movie_genres
-        WHERE movie_id = ${movie_id}
-    ),
-    matching_movies AS (
-        SELECT
-            t2.movie_id,
-            COUNT(*) AS matching_genres_count
-        FROM movie_genres t2
-        INNER JOIN this_movie_genres mg ON t2.genre_id = mg.genre_id
-        WHERE t2.movie_id != ${movie_id}
-        GROUP BY t2.movie_id
-    ),
-    similar_movie_ids AS (
-        SELECT m.movie_id
-        FROM matching_movies m
-        WHERE m.matching_genres_count = (SELECT COUNT(*) FROM this_movie_genres)
-        OR m.matching_genres_count >= 3
-    )
-    SELECT COUNT(DISTINCT movie_details.id) AS total
+    SELECT
+        movie_details.id AS movie_id,
+        movie_details.title,
+        movie_details.vote_average,
+        movie_details.poster_path,
+        JSON_AGG(
+            JSON_BUILD_OBJECT('id', genres.id, 'name', genres.name)
+        ) AS genres
     FROM similar_movie_ids
     JOIN movie_details
-    ON similar_movie_ids.movie_id = movie_details.id;
+        ON similar_movie_ids.movie_id = movie_details.id
+    JOIN movie_genres
+        ON movie_details.id = movie_genres.movie_id
+    JOIN genres
+        ON movie_genres.genre_id = genres.id
+    GROUP BY movie_details.id, movie_details.title, movie_details.vote_average, movie_details.poster_path
+    ORDER BY movie_details.vote_average DESC
+    LIMIT ${pageSize} OFFSET ${offset};
+  `;
+
+  // Query to get the total count of unique movies
+  const countQuery = `
+    WITH this_movie_genres AS (
+        SELECT genre_id
+        FROM movie_genres
+        WHERE movie_id = ${movie_id}
+    ),
+    matching_movies AS (
+        SELECT
+            t2.movie_id,
+            COUNT(*) AS matching_genres_count
+        FROM movie_genres t2
+        INNER JOIN this_movie_genres mg ON t2.genre_id = mg.genre_id
+        WHERE t2.movie_id != ${movie_id}
+        GROUP BY t2.movie_id
+    ),
+    similar_movie_ids AS (
+        SELECT m.movie_id
+        FROM matching_movies m
+        WHERE m.matching_genres_count = (SELECT COUNT(*) FROM this_movie_genres)
+        OR m.matching_genres_count >= 3
+    )
+    SELECT COUNT(*) AS total
+    FROM similar_movie_ids;
   `;
 
   try {
@@ -541,32 +548,17 @@ const getSimilarMovies = async function (req, res) {
     const totalItems = parseInt(countData.rows[0].total, 10);
     const totalPages = Math.ceil(totalItems / pageSize);
 
-    const uniqueMovies = new Map();
+    const results = data.rows.map((row) => ({
+      id: row.movie_id,
+      title: row.title,
+      rating: parseFloat(row.vote_average), 
+      image: make_picture_url(picture_size, row.poster_path),
+      genres: row.genres, 
+    }));
 
-    // Process query results to ensure unique movies
-    data.rows.forEach((row) => {
-      if (!uniqueMovies.has(row.movie_id)) {
-        uniqueMovies.set(row.movie_id, {
-          id: row.movie_id,
-          title: row.title,
-          rating: row.vote_average,
-          image: make_picture_url(picture_size, row.poster_path),
-          genres: [],
-        });
-      }
-      // Add genre to the movie
-      uniqueMovies.get(row.movie_id).genres.push({
-        id: row.genre_id,
-        name: row.name,
-      });
-    });
-
-    // Convert Map to array, ensure unique results, and handle pagination
-    const uniqueMoviesArray = Array.from(uniqueMovies.values());
-    const paginatedMovies = uniqueMoviesArray.slice(0, pageSize);
-
+    // Return the paginated response
     res.json({
-      results: paginatedMovies,
+      results,
       currentPage: page,
       totalPages,
       totalItems,
@@ -579,6 +571,8 @@ const getSimilarMovies = async function (req, res) {
     });
   }
 };
+
+
 
 // Route 13: GET /api/persons/:person_id
 const getPersonInfo = async function (req, res) {
