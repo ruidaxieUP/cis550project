@@ -492,28 +492,36 @@ const getSimilarMovies = async function (req, res) {
         FROM matching_movies m
         WHERE m.matching_genres_count = (SELECT COUNT(*) FROM this_movie_genres)
         OR m.matching_genres_count >= 3
+    ),
+    ranked_movies AS (
+        SELECT
+            movie_details.id AS movie_id,
+            movie_details.title,
+            movie_details.vote_average,
+            movie_details.poster_path,
+            ROW_NUMBER() OVER (ORDER BY movie_details.vote_average DESC) AS row_num
+        FROM similar_movie_ids
+        JOIN movie_details
+          ON similar_movie_ids.movie_id = movie_details.id
     )
     SELECT
-        movie_details.id AS movie_id,
-        movie_details.title,
-        movie_details.vote_average,
-        movie_details.poster_path,
+        rm.movie_id,
+        rm.title,
+        rm.vote_average,
+        rm.poster_path,
         JSON_AGG(
             JSON_BUILD_OBJECT('id', genres.id, 'name', genres.name)
         ) AS genres
-    FROM similar_movie_ids
-    JOIN movie_details
-        ON similar_movie_ids.movie_id = movie_details.id
+    FROM ranked_movies rm
     JOIN movie_genres
-        ON movie_details.id = movie_genres.movie_id
+        ON rm.movie_id = movie_genres.movie_id
     JOIN genres
         ON movie_genres.genre_id = genres.id
-    GROUP BY movie_details.id, movie_details.title, movie_details.vote_average, movie_details.poster_path
-    ORDER BY movie_details.vote_average DESC
-    LIMIT ${pageSize} OFFSET ${offset};
+    WHERE rm.row_num > ${offset} AND rm.row_num <= ${offset} + ${pageSize}
+    GROUP BY rm.movie_id, rm.title, rm.vote_average, rm.poster_path
+    ORDER BY rm.vote_average DESC;
   `;
 
-  // Query to get the total count of unique movies
   const countQuery = `
     WITH this_movie_genres AS (
         SELECT genre_id
@@ -551,12 +559,11 @@ const getSimilarMovies = async function (req, res) {
     const results = data.rows.map((row) => ({
       id: row.movie_id,
       title: row.title,
-      rating: parseFloat(row.vote_average), 
+      rating: parseFloat(row.vote_average),
       image: make_picture_url(picture_size, row.poster_path),
-      genres: row.genres, 
+      genres: row.genres,
     }));
 
-    // Return the paginated response
     res.json({
       results,
       currentPage: page,
@@ -571,6 +578,7 @@ const getSimilarMovies = async function (req, res) {
     });
   }
 };
+
 
 
 
