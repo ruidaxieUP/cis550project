@@ -5,34 +5,13 @@ import Pagination from "../components/Pagination";
 import { fetchData } from "./utils";
 
 export default function PersonPage() {
-  const [filter, setFilter] = useState("name_asc");
+  const [filter, setFilter] = useState("popularity_desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState([]); 
   const [totalPages, setTotalPages] = useState(1); 
   const [backgroundImage, setBackgroundImage] = useState("");
 
   const pageSize = 16; 
-
-  // // TODO Mock server-side data, will let the server handle this in the future
-  // const fullData = Array.from({ length: 114 }, (_, index) => ({
-  //   id: index,
-  //   image: "https://via.placeholder.com/150",
-  //   title: `Person ${index + 1}`,
-  //   rating: (Math.random() * 10).toFixed(1),
-  // }));
-
-  // // Fetch data
-  // useEffect(() => {
-  //   const fetchPaginatedData = () => {
-  //     const startIndex = (currentPage - 1) * pageSize;
-  //     const paginatedData = fullData.slice(startIndex, startIndex + pageSize);
-  
-  //     setTotalPages(Math.ceil(fullData.length / pageSize));
-  //     setData(paginatedData);
-  //   };
-  
-  //   fetchPaginatedData();
-  // }, [currentPage, filter]); //TODO - Add filter to dependency array
   
   // Fetch data
   useEffect(() => {
