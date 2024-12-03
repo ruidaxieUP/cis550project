@@ -8,86 +8,6 @@ import MovieCard from "../components/ImageCard/MoiveRectImageCard";
 import Pagination from "../components/Pagination";
 import { fetchDataById } from "./utils";
 
-const mockMovieData = {
-  movie_id: "12345",
-  poster_path: "https://via.placeholder.com/403x604",
-  movie_name: "Dancer in the Dark",
-  production_year: 2000,
-  rating: 7.9,
-  votes: 1760,
-  status: "Released",
-  director: "Lars von Trier",
-  cast: "David Morse, Peter Stormare, Catherine Deneuve, Stellan Skarsard, Zeljko Ivanek",
-  release_date: "5/30/2000",
-  duration: "140 minutes",
-  budget: "12.5 million",
-  revenue: "40.06 million",
-  overview:
-    "Selma, a Czech immigrant on the verge of blindness, struggles to make ends meet for herself and her son, who has inherited the same genetic disorder and will suffer the same fate without an expensive operation. When life gets too difficult, Selma learns to cope through her love of musicals, escaping life's troubles - even if just for a moment - by dreaming up little numbers to the rhythmic beats of her surroundings.",
-};
-
-const mockGenres = [
-  { id: 80, name: "Crime" },
-  { id: 18, name: "Drama" },
-  { id: 10749, name: "Romance" },
-];
-
-const castData = [
-  {
-    id: 1,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character A",
-    actorName: "Actor A",
-  },
-  {
-    id: 2,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character B",
-    actorName: "Actor B",
-  },
-  {
-    id: 3,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character C",
-    actorName: "Actor C",
-  },
-  {
-    id: 4,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character D",
-    actorName: "Actor D",
-  },
-  {
-    id: 5,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character E",
-    actorName: "Actor E",
-  },
-  {
-    id: 6,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character F",
-    actorName: "Actor F",
-  },
-  {
-    id: 7,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character G",
-    actorName: "Actor G",
-  },
-  {
-    id: 8,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character H",
-    actorName: "Actor H",
-  },
-  {
-    id: 9,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character I",
-    actorName: "Actor I",
-  },
-];
 
 // Temporary Mock API, backend will be implemented later
 const mockMoreLikeThis = Array.from({ length: 180 }, (_, index) => ({
@@ -102,13 +22,13 @@ const mockMoreLikeThis = Array.from({ length: 180 }, (_, index) => ({
 }));
 
 // Temporary Mock API, backend will be implemented later
-function fetchMockMoreLikeThis(page = 1, pageSize = 8) {
-  const totalItems = mockMoreLikeThis.length;
+function fetchMoreLikeThis(moreLikeThis, page = 1, pageSize = 8) {
+  const totalItems = moreLikeThis.length;
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (page - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalItems);
 
-  const result = mockMoreLikeThis.slice(startIndex, endIndex);
+  const result = moreLikeThis.slice(startIndex, endIndex);
 
   return {
     result,
@@ -121,6 +41,8 @@ function fetchMockMoreLikeThis(page = 1, pageSize = 8) {
 export default function MovieInfoPage() {
   const [movieData, setMovieData] = useState(null);
   const [castData, setCastData] = useState([]);
+  const [genreData, setGenreData] = useState([]);
+  const [moreLikeThis, setMoreLikeThis] = useState([]);
   const [movies, setMovies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -131,11 +53,13 @@ export default function MovieInfoPage() {
     setTimeout(() => {
       fetchDataById("movies", movie_id, setMovieData);
       fetchDataById("movie-casts", movie_id, setCastData);
+      fetchDataById("movie-genres", movie_id, setGenreData);
+      fetchDataById("similar-movies", movie_id, setMoreLikeThis);
       loadPageData(currentPage);
     }, 500);
   }, []);
   const loadPageData = (page) => {
-    const { result, currentPage, totalPages } = fetchMockMoreLikeThis(page);
+    const { result, currentPage, totalPages } = fetchMoreLikeThis(moreLikeThis, page);
     setMovies(result);
     setCurrentPage(currentPage);
     setTotalPages(totalPages);
@@ -201,7 +125,7 @@ export default function MovieInfoPage() {
           </div>
 
           {/* Genre Section */}
-          <GenresContainer genres={mockGenres} />
+          <GenresContainer genres={genreData} />
 
           {/* Metadata Section */}
           <div className="flex flex-col gap-[12px] self-stretch shrink-0 flex-nowrap">
