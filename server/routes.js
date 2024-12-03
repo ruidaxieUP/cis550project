@@ -259,30 +259,31 @@ const getMovies = async function(req, res) {
 }
 
 // Route 7: GET /api/random
-const getRandom = async function(req, res) {
+const getRandom = async function (req, res) {
   const query = `
     SELECT id,
-    poster_path
+           backdrop_path
     FROM movie_details
-    WHERE poster_path IS NOT NULL
+    WHERE backdrop_path IS NOT NULL
     ORDER BY RANDOM()
     LIMIT 1;
   `;
 
   connection.query(query, (err, data) => {
     if (err) {
-      console.error(err);
-      res.status(500).json({ error: "Internal server error" });
-    } else if (data.length === 0) {
-      res.status(404).json({ error: "No picture found" });
+      console.error('Error executing query:', err);
+      res.status(500).json({ error: 'Internal server error' });
+    } else if (data.rows.length === 0) {
+      res.status(404).json({ error: 'No picture found' });
     } else {
-      const row = data[0];
+      const row = data.rows[0];
       res.json({
-        src: make_picture_url(picture_size, row.poster_path)
+        src: make_picture_url(picture_size, row.backdrop_path),
       });
     }
   });
 };
+
 
 // Route 8: GET /api/persons
 const getPersons = async (req, res) => {
@@ -367,7 +368,91 @@ const getPersons = async (req, res) => {
   }
 };
 
+// Route 9: GET /api/movies/:movie_id
+const getMovieInfo = async function(req, res) {
+  const movie_id = req.params.movie_id;
+  query = `
+    with top_5_cast as
+        (select movie_id, name
+        from movie_cast
+        where movie_id = ${movie_id}
+        order by popularity desc
+        limit 5),
+    cast_names as
+        (select movie_id, STRING_AGG(name, ', ') AS names
+        from top_5_cast
+        group by movie_id),
+    director_names as
+        (select movie_id, STRING_AGG(name, ', ') AS names
+        from movie_crew
+        where job in ('Director', 'Co-Director')
+        and movie_id = ${movie_id}
+        group by movie_id)
+    select id as movie_id, poster_path, title as movie_name,
+            vote_average as rating, vote_count as votes, status,
+            director_names.names as directors,
+            cast_names.names as casts,
+            extract (year from release_date) as production_year,
+            TO_CHAR(release_date, 'YYYY-MM-DD') AS release_date,
+            runtime as duration,
+            revenue, budget, overview
+    from director_names
+    join cast_names on director_names.movie_id = cast_names.movie_id
+    join movie_details on cast_names.movie_id = movie_details.id
+    order by popularity desc;
+  `
+  connection.query(
+    query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      row = data.rows[0];
+      res.json({
+        poster_path: make_picture_url(picture_size, row.poster_path),
+        movie_name: row.movie_name,
+        production_year: row.production_year,
+        rating: parseFloat(row.rating),
+        votes: row.votes,
+        status: row.status,
+        director: row.directors,
+        cast: row.casts,
+        released_date: row.released_date,
+        duration: row.duration,
+        budget: row.budget,
+        revenue: row.revenue,
+        overview: row.overview,
+      });
+    }
+  });
+}
 
+// Route 10: GET /api/movie-casts/:movie_id
+const getMovieCasts = async function(req, res) {
+  const movie_id = req.params.movie_id;
+  query = `
+    select profile_path, character, name
+    from movie_cast
+    join movie_details
+    on movie_cast.movie_id = movie_details.id
+    where movie_id = 319
+    order by movie_cast.popularity desc
+    limit 9;
+  `
+  connection.query(
+    query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(data.rows.map(row => ({
+        image: make_picture_url(picture_size, row.profile_path),
+        characterName: row.character,
+        actorName: row.name,
+      })));
+    }
+  });
+};
 
 
 
@@ -379,4 +464,6 @@ module.exports = {
   topActors,
   topActresses,
   topCombos,
+  getMovieInfo,
+  getMovieCasts,
 }

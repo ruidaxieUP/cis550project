@@ -1,10 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import GenresContainer from "../components/GenresContainer";
 import CastImageCard from "../components/ImageCard/CastImageCard";
 import MovieCard from "../components/ImageCard/MoiveRectImageCard";
 import Pagination from "../components/Pagination";
+import { fetchDataById } from "./utils";
 
 const mockMovieData = {
   movie_id: "12345",
@@ -16,7 +18,7 @@ const mockMovieData = {
   status: "Released",
   director: "Lars von Trier",
   cast: "David Morse, Peter Stormare, Catherine Deneuve, Stellan Skarsard, Zeljko Ivanek",
-  released_date: "5/30/2000",
+  release_date: "5/30/2000",
   duration: "140 minutes",
   budget: "12.5 million",
   revenue: "40.06 million",
@@ -54,12 +56,6 @@ const castData = [
     image: "https://via.placeholder.com/182",
     characterName: "Character D",
     actorName: "Actor D",
-  },
-  {
-    id: 5,
-    image: "https://via.placeholder.com/182",
-    characterName: "Character E",
-    actorName: "Actor E",
   },
   {
     id: 5,
@@ -124,18 +120,20 @@ function fetchMockMoreLikeThis(page = 1, pageSize = 8) {
 
 export default function MovieInfoPage() {
   const [movieData, setMovieData] = useState(null);
+  const [castData, setCastData] = useState([]);
   const [movies, setMovies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const { movie_id } = useParams();
 
   useEffect(() => {
     // Simulate fetching movie data and paginated data
     setTimeout(() => {
-      setMovieData(mockMovieData);
+      fetchDataById("movies", movie_id, setMovieData);
+      fetchDataById("movie-casts", movie_id, setCastData);
       loadPageData(currentPage);
     }, 500);
   }, []);
-
   const loadPageData = (page) => {
     const { result, currentPage, totalPages } = fetchMockMoreLikeThis(page);
     setMovies(result);
@@ -160,7 +158,7 @@ export default function MovieInfoPage() {
     status,
     director,
     cast,
-    released_date,
+    release_date,
     duration,
     budget,
     revenue,
@@ -211,7 +209,6 @@ export default function MovieInfoPage() {
               { label: "Status", value: status },
               { label: "Director", value: director },
               { label: "Cast", value: cast },
-              { label: "Released Date", value: released_date },
               { label: "Duration", value: duration },
               { label: "Budget", value: budget },
               { label: "Revenue", value: revenue },
@@ -267,7 +264,7 @@ export default function MovieInfoPage() {
               key={movie.id}
               image={movie.image}
               title={movie.title}
-              rating={movie.rating}
+              rating={parseFloat(movie.rating)}
               genres={movie.genres}
             />
           ))}
