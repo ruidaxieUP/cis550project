@@ -86,6 +86,8 @@ export default function PersonPage() {
                 image={item.image}
                 title={item.name}
                 rating={parseFloat(item.popularity)}
+                itemId={item.id}
+                type="person"
               />
             ))}
           </div>

@@ -4,7 +4,9 @@ import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
 
 
-export default function Card({ image, title, rating, movieId }) {
+export default function Card({ image, title, rating, itemId, type}) {
+  const linkTo = type === "person" ? `/persons/${itemId}` : `/movies/${itemId}`;
+
   return (
     <div className="flex flex-col w-[241px] h-[346px] p-[16px] bg-[#fff] rounded-[8px] border border-[#d9d9d9]">
       {/* Image */}
@@ -17,7 +19,7 @@ export default function Card({ image, title, rating, movieId }) {
 
       {/* Title as Link */}
       <Link
-        to={`/movies/${movieId}`}
+        to={linkTo}
         className="text-[16px] font-semibold text-[#1e1e1e] hover:underline"
       >
         {title}
@@ -47,5 +49,6 @@ Card.propTypes = {
   image: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   rating: PropTypes.number.isRequired,
-  movieId: PropTypes.number.isRequired,
+  itemId: PropTypes.number.isRequired,
+  type: PropTypes.oneOf(["movie", "person"]).isRequired, 
 };
