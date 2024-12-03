@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import ImageSlider from "../components/ImageSlider";
 import GenresContainer from "../components/GenresContainer";
+import { useParams } from "react-router-dom";
 import Card from "../components/ImageCard/KnownForCard";
 import Pagination from "../components/Pagination";
+import { fetchDataById } from "./utils";
 
 // mock data
 const mockPersonData = {
   id: 976,
   name: "Jason Statham",
-  imagePath: "https://via.placeholder.com/403x604",
+  imagePath: "https://media.istockphoto.com/id/922962354/vector/no-image-available-sign.jpg?s=612x612&w=0&k=20&c=xbGzQiL_UIMFDUZte1U0end0p3E8iwocIOGt_swlywE=",
   bio: `Jason Statham (born July 26, 1967) is an English actor. He is known for portraying characters in various action-thriller films who are typically tough, hardboiled, gritty, or violent.
 
 Statham began practicing Chinese martial arts, kickboxing, and karate recreationally in his youth while working at local market stalls. An avid footballer and diver, he was a member of Britain's national diving team and competed for England in the 1990 Commonwealth Games. Shortly after, he was asked to model for French Connection, Tommy Hilfiger, and Levi's in various advertising campaigns. His past history working at market stalls inspired his casting in the Guy Ritchie crime films Lock, Stock and Two Smoking Barrels (1998) and Snatch (2000).
@@ -69,7 +71,6 @@ const mockGenres = [
 ];
 
 
-
 // Temporary Mock API, backend will be implemented later
 const mockKnownForData = Array.from({ length: 180 }, (_, index) => ({
   posterPath: "https://via.placeholder.com/241x247",
@@ -79,14 +80,18 @@ const mockKnownForData = Array.from({ length: 180 }, (_, index) => ({
 }));
 
 //Temporary Mock API, backend will be implemented later
-function fetchMockKnownForData(page = 1, pageSize = 8) {
-  const totalItems = mockKnownForData.length;
+function fetchKnownForData(knownForData, page = 1, pageSize = 8) {
+  const totalItems = knownForData.length;
   const totalPages = Math.ceil(totalItems / pageSize);
   const startIndex = (page - 1) * pageSize;
   const endIndex = Math.min(startIndex + pageSize, totalItems);
-
-  const result = mockKnownForData.slice(startIndex, endIndex);
-
+  const result = knownForData.slice(startIndex, endIndex);
+  
+  console.log('totalItems', totalItems);
+  console.log('totalPages', totalPages);
+  console.log('startIndex', startIndex);
+  console.log('endIndex', endIndex);
+  console.log('result', result);
   return {
     result,
     currentPage: page,
@@ -97,19 +102,30 @@ function fetchMockKnownForData(page = 1, pageSize = 8) {
 
 export default function PeopleInfoPage() {
   const [personData, setPersonData] = useState(null);
+  const [personGenres, setPersonGenres] = useState([]);
   const [knownForData, setKnownForData] = useState([]);
+  const [collaborators, setCollaborators] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const { person_id } = useParams();
 
   useEffect(() => {
     setTimeout(() => {
-      setPersonData(mockPersonData);
+      fetchDataById('persons', person_id, setPersonData);
+      fetchDataById('person-genres', person_id, setPersonGenres);
+      fetchDataById('person-known-for', person_id, setKnownForData);
+      fetchDataById('person-collaborators', person_id, setCollaborators);
       loadPageData(currentPage);
     }, 500);
   }, []);
 
   const loadPageData = (page) => {
-    const { result, currentPage, totalPages } = fetchMockKnownForData(page);
+    const { result, currentPage, totalPages } = fetchKnownForData(knownForData, page);
+    
+    console.log('result', result);
+    console.log('currentPage', currentPage);
+    console.log('totalPages', totalPages);
+
     setKnownForData(result);
     setCurrentPage(currentPage);
     setTotalPages(totalPages);
@@ -142,7 +158,7 @@ export default function PeopleInfoPage() {
           </div>
 
           {/* Genre Section */}
-          <GenresContainer genres={mockGenres} />
+          <GenresContainer genres={personGenres} />
 
           {/* Bio Section */}
           <div className="flex flex-col w-full">
@@ -165,7 +181,7 @@ export default function PeopleInfoPage() {
               posterPath={item.posterPath}
               movieName={item.movieName}
               characterName={item.characterName}
-              rating={item.rating}
+              rating={parseFloat(item.rating)}
             />
           ))}
         </div>
@@ -184,7 +200,7 @@ export default function PeopleInfoPage() {
       <div className="main-container flex w-[1071px] flex-col items-center mx-auto my-0">
         <ImageSlider
           title="Top 10 Frequent Collaborators"
-          data={mockTopCollaborators}
+          data={collaborators}
         />
       </div>
     </div>

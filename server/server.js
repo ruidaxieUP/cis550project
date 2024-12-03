@@ -48,6 +48,18 @@ app.get('/api/movie-genres/:movie_id', routes.getMovieGenres);
 // Route to get similar movies
 app.get('/api/similar-movies/:movie_id', routes.getSimilarMovies);
 
+// Route to get person info
+app.get('/api/persons/:person_id', routes.getPersonInfo);
+
+// Route to get person genres
+app.get('/api/person-genres/:person_id', routes.getPersonGenres);
+
+// Route to get person genres
+app.get('/api/person-known-for/:person_id', routes.getPersonKnownFor);
+
+// Route to get person genres
+app.get('/api/person-collaborators/:person_id', routes.getPersonCollaborators);
+
 // Start the server
 app.listen(config.server_port, () => {
   console.log(`Server is running on http://${config.server_host}:${config.server_port}/`);
