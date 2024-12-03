@@ -7,13 +7,16 @@ const routes = require('./routes');
 
 const app = express();
 
+
+// Middleware
+app.use(cors({
+  origin: 'http://localhost:5173',
+}));
+app.use(express.json());
+
 // We use express to define our various API endpoints and
 // provide their handlers that we implemented in routes.js
 app.get('/api/movies', routes.getMovies); // added by Bowen Xiang on Nov 27
-
-// Middleware
-app.use(cors());
-app.use(express.json());
 
 // Route to get top 10 directors
 app.get('/api/top-directors', routes.topDirectors);
