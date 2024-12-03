@@ -21,7 +21,7 @@ export default function PeopleInfoPage() {
       fetchDataById("person-genres", person_id, setPersonGenres);
       fetchDataById("person-collaborators", person_id, setCollaborators);
     }, 500);
-  }, []);
+  });
 
   useEffect(() => {
     // Fetch paginated "known for" data when currentPage changes
