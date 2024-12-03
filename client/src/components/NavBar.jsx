@@ -4,7 +4,7 @@ import '../index.css';
 
 const NAV_ITEMS = [
   { name: "Home", path: "/" },
-  { name: "Person", path: "/person" },
+  { name: "Person", path: "/persons" },
   { name: "Movie", path: "/movies" },
   { name: "Contact", path: "/contact" },
 ];
