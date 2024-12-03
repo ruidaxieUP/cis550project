@@ -7,12 +7,12 @@ import { fetchData } from "./utils";
 export default function PersonPage() {
   const [filter, setFilter] = useState("popularity_desc");
   const [currentPage, setCurrentPage] = useState(1);
-  const [data, setData] = useState([]); 
-  const [totalPages, setTotalPages] = useState(1); 
+  const [data, setData] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
   const [backgroundImage, setBackgroundImage] = useState("");
 
-  const pageSize = 16; 
-  
+  const pageSize = 16;
+
   // Fetch data
   useEffect(() => {
     fetchData(
@@ -46,7 +46,7 @@ export default function PersonPage() {
     };
   }, []);
 
-   // Reset to first page on filter change
+  // Reset to first page on filter change
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
     setCurrentPage(1);
@@ -66,10 +66,9 @@ export default function PersonPage() {
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          opacity: 0.8, 
+          opacity: 0.8,
         }}
-      >
-      </div>
+      ></div>
 
       {/* Content Section */}
       <div className="container mx-auto mt-[70px] px-4 flex flex-col items-center">
@@ -82,7 +81,12 @@ export default function PersonPage() {
           {/* Grid of Cards */}
           <div className="grid grid-cols-4 gap-4">
             {data.map((item) => (
-              <Card key={item.id} image={item.image} title={item.name} rating={parseFloat(item.popularity)} />
+              <Card
+                key={item.id}
+                image={item.image}
+                title={item.name}
+                rating={parseFloat(item.popularity)}
+              />
             ))}
           </div>
 
