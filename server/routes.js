@@ -24,7 +24,9 @@ const connection = new Pool({
 connection.connect((err) => err && console.log(err));
 
 function make_picture_url(size, fname) {
-  return fname ? picture_url + size + fname : "https://media.istockphoto.com/id/922962354/vector/no-image-available-sign.jpg?s=612x612&w=0&k=20&c=xbGzQiL_UIMFDUZte1U0end0p3E8iwocIOGt_swlywE=";
+  return fname
+    ? picture_url + size + fname
+    : "https://media.istockphoto.com/id/922962354/vector/no-image-available-sign.jpg?s=612x612&w=0&k=20&c=xbGzQiL_UIMFDUZte1U0end0p3E8iwocIOGt_swlywE=";
 }
 
 // Route 1: GET /api/top-directors
@@ -463,12 +465,15 @@ const getMovieGenres = async function (req, res) {
   });
 };
 
-
 // Route 12: GET /api/similar-movies/:movie_id
 const getSimilarMovies = async function (req, res) {
   const movie_id = req.params.movie_id;
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 8;
+  const offset = (page - 1) * pageSize;
+
   query = `
-    WITH this_movie_genres AS (
+  WITH this_movie_genres AS (
         SELECT genre_id
         FROM movie_genres
         WHERE movie_id = ${movie_id}
@@ -497,33 +502,82 @@ const getSimilarMovies = async function (req, res) {
     join genres
     on movie_genres.genre_id = genres.id
     order by vote_average desc
-    limit 100;
-  `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      const moviesMap = {};
-      data.rows.forEach((row) => {
-        if (!moviesMap[row.title]) {
-          moviesMap[row.title] = {
-            id: row.movie_id,
-            title: row.title,
-            rating: row.vote_average,
-            image: make_picture_url(picture_size, row.poster_path),
-            genres: [],
-          };
-        }
-        moviesMap[row.title].genres.push({
-          id: row.genre_id,
-          name: row.name,
-        });
-      });
+    limit ${pageSize * 2} offset ${offset};
+`;
 
-      res.json(Object.values(moviesMap));
-    }
-  });
+  const countQuery = `
+  WITH this_movie_genres AS (
+        SELECT genre_id
+        FROM movie_genres
+        WHERE movie_id = ${movie_id}
+    ),
+    matching_movies AS (
+        SELECT
+            t2.movie_id,
+            COUNT(*) AS matching_genres_count
+        FROM movie_genres t2
+        INNER JOIN this_movie_genres mg ON t2.genre_id = mg.genre_id
+        WHERE t2.movie_id != ${movie_id}
+        GROUP BY t2.movie_id
+    ),
+    similar_movie_ids AS (
+        SELECT m.movie_id
+        FROM matching_movies m
+        WHERE m.matching_genres_count = (SELECT COUNT(*) FROM this_movie_genres)
+        OR m.matching_genres_count >= 3
+    )
+    SELECT COUNT(DISTINCT movie_details.id) AS total
+    FROM similar_movie_ids
+    JOIN movie_details
+    ON similar_movie_ids.movie_id = movie_details.id;
+  `;
+
+  try {
+    const [data, countData] = await Promise.all([
+      connection.query(query),
+      connection.query(countQuery),
+    ]);
+
+    const totalItems = parseInt(countData.rows[0].total, 10);
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    const uniqueMovies = new Map();
+
+    // Process query results to ensure unique movies
+    data.rows.forEach((row) => {
+      if (!uniqueMovies.has(row.movie_id)) {
+        uniqueMovies.set(row.movie_id, {
+          id: row.movie_id,
+          title: row.title,
+          rating: row.vote_average,
+          image: make_picture_url(picture_size, row.poster_path),
+          genres: [],
+        });
+      }
+      // Add genre to the movie
+      uniqueMovies.get(row.movie_id).genres.push({
+        id: row.genre_id,
+        name: row.name,
+      });
+    });
+
+    // Convert Map to array, ensure unique results, and handle pagination
+    const uniqueMoviesArray = Array.from(uniqueMovies.values());
+    const paginatedMovies = uniqueMoviesArray.slice(0, pageSize);
+
+    res.json({
+      results: paginatedMovies,
+      currentPage: page,
+      totalPages,
+      totalItems,
+    });
+  } catch (err) {
+    console.error("Error fetching similar movies:", err);
+    res.status(500).json({
+      error: "Internal server error",
+      details: err.message,
+    });
+  }
 };
 
 // Route 13: GET /api/persons/:person_id
@@ -541,11 +595,11 @@ const getPersonInfo = async function (req, res) {
     } else {
       row = data.rows[0];
       res.json({
-          id: row.id,
-          name: row.name,
-          imagePath: make_picture_url(picture_size, row.profile_path),
-          knownForDepartment: row.known_for_department,
-          bio: row.biography
+        id: row.id,
+        name: row.name,
+        imagePath: make_picture_url(picture_size, row.profile_path),
+        knownForDepartment: row.known_for_department,
+        bio: row.biography,
       });
     }
   });
@@ -628,7 +682,7 @@ const getPersonKnownFor = async function (req, res) {
     WHERE person_id = ${person_id};
   `;
 
-  try{
+  try {
     const [data, countData] = await Promise.all([
       connection.query(query),
       connection.query(countQuery),
