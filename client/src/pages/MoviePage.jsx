@@ -84,7 +84,8 @@ export default function MoivePage() {
                 key={item.id}
                 image={item.image}
                 title={item.name}
-                rating={parseFloat(item.popularity)}
+                rating={parseFloat(item.popularity).toFixed(1)}
+                movieId={item.id}
               />
             ))}
           </div>
