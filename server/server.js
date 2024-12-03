@@ -60,6 +60,9 @@ app.get('/api/person-known-for/:person_id', routes.getPersonKnownFor);
 // Route to get person genres
 app.get('/api/person-collaborators/:person_id', routes.getPersonCollaborators);
 
+// Route to get live search results
+app.get('/api/search-persons', routes.searchPersons);
+
 // Start the server
 app.listen(config.server_port, () => {
   console.log(`Server is running on http://${config.server_host}:${config.server_port}/`);
