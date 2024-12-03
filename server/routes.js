@@ -24,7 +24,7 @@ const connection = new Pool({
 connection.connect((err) => err && console.log(err));
 
 function make_picture_url(size, fname) {
-  return picture_url + size + fname;
+  return fname ? picture_url + size + fname : "https://media.istockphoto.com/id/922962354/vector/no-image-available-sign.jpg?s=612x612&w=0&k=20&c=xbGzQiL_UIMFDUZte1U0end0p3E8iwocIOGt_swlywE=";
 }
 
 // Route 1: GET /api/top-directors
@@ -417,7 +417,7 @@ const getMovieCasts = async function (req, res) {
     from movie_cast
     join movie_details
     on movie_cast.movie_id = movie_details.id
-    where movie_id = 319
+    where movie_id = ${movie_id}
     order by movie_cast.popularity desc
     limit 9;
   `;
@@ -437,6 +437,94 @@ const getMovieCasts = async function (req, res) {
   });
 };
 
+// Route 11: GET /api/movie-genres/:movie_id
+const getMovieGenres = async function (req, res) {
+  const movie_id = req.params.movie_id;
+  query = `
+    select distinct genres.id, genres.name
+    from genres
+    join movie_genres
+    on genres.id = movie_genres.genre_id
+    where movie_id = ${movie_id};
+  `;
+  connection.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      res.json(
+        data.rows.map((row) => ({
+          id: row.id,
+          name: row.name,
+        }))
+      );
+    }
+  });
+};
+
+
+// Route 12: GET /api/similar-movies/:movie_id
+const getSimilarMovies = async function (req, res) {
+  const movie_id = req.params.movie_id;
+  query = `
+    WITH this_movie_genres AS (
+        SELECT genre_id
+        FROM movie_genres
+        WHERE movie_id = ${movie_id}
+    ),
+    matching_movies AS (
+        SELECT
+            t2.movie_id,
+            COUNT(*) AS matching_genres_count
+        FROM movie_genres t2
+        INNER JOIN this_movie_genres mg ON t2.genre_id = mg.genre_id
+        WHERE t2.movie_id != ${movie_id}
+        GROUP BY t2.movie_id
+    ),
+    similar_movie_ids AS (
+        SELECT m.movie_id
+        FROM matching_movies m
+        WHERE m.matching_genres_count = (SELECT COUNT(*) FROM this_movie_genres)
+        OR m.matching_genres_count >= 3
+    )
+    select movie_genres.movie_id, title, vote_average, poster_path, genre_id, genres.name
+    from similar_movie_ids
+    join movie_details
+    on similar_movie_ids.movie_id = movie_details.id
+    join movie_genres
+    on movie_details.id = movie_genres.movie_id
+    join genres
+    on movie_genres.genre_id = genres.id
+    order by vote_average desc
+    limit 40;
+  `;
+  connection.query(query, (err, data) => {
+    if (err) {
+      console.log(err);
+      res.json({});
+    } else {
+      const moviesMap = {};
+      data.rows.forEach((row) => {
+        if (!moviesMap[row.title]) {
+          moviesMap[row.title] = {
+            id: row.movie_id,
+            title: row.title,
+            rating: row.vote_average,
+            image: make_picture_url(picture_size, row.poster_path),
+            genres: [],
+          };
+        }
+        moviesMap[row.title].genres.push({
+          id: row.genre_id,
+          name: row.name,
+        });
+      });
+
+      res.json(Object.values(moviesMap));
+    }
+  });
+};
+
 module.exports = {
   getMovies, // Bowen Xiang added on Nov 27
   getPersons,
@@ -447,4 +535,6 @@ module.exports = {
   topCombos,
   getMovieInfo,
   getMovieCasts,
+  getMovieGenres,
+  getSimilarMovies,
 };

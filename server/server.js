@@ -42,6 +42,12 @@ app.get('/api/movies/:movie_id', routes.getMovieInfo);
 // Route to get movie casts
 app.get('/api/movie-casts/:movie_id', routes.getMovieCasts);
 
+// Route to get movie genres
+app.get('/api/movie-genres/:movie_id', routes.getMovieGenres);
+
+// Route to get similar movies
+app.get('/api/similar-movies/:movie_id', routes.getSimilarMovies);
+
 // Start the server
 app.listen(config.server_port, () => {
   console.log(`Server is running on http://${config.server_host}:${config.server_port}/`);
