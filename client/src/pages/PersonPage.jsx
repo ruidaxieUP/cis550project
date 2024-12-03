@@ -9,6 +9,7 @@ export default function PersonPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [data, setData] = useState([]); 
   const [totalPages, setTotalPages] = useState(1); 
+  const [backgroundImage, setBackgroundImage] = useState("");
 
   const pageSize = 16; 
 
@@ -44,6 +45,28 @@ export default function PersonPage() {
     );
   }, [currentPage, filter]);
 
+  // Fetch random background image
+  useEffect(() => {
+    let isMounted = true; // Guard to prevent state updates on unmounted components
+    const fetchBackgroundImage = async () => {
+      try {
+        fetchData("random", (data) => {
+          if (isMounted && data?.src) {
+            setBackgroundImage(data.src);
+          }
+        });
+      } catch (error) {
+        console.error("Failed to fetch background image:", error);
+      }
+    };
+
+    fetchBackgroundImage();
+
+    return () => {
+      isMounted = false; // Cleanup to prevent state updates
+    };
+  }, []);
+
    // Reset to first page on filter change
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
@@ -60,7 +83,7 @@ export default function PersonPage() {
       <div
         className="flex flex-col items-center justify-center w-full h-[570px] bg-[rgba(255,255,255,0.16)] bg-cover bg-no-repeat relative"
         style={{
-          backgroundImage: `url('https://image.tmdb.org/t/p/w500/hQ4pYsIbP22TMXOUdSfC2mjWrO0.jpg')`,
+          backgroundImage: `url('${backgroundImage}')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
