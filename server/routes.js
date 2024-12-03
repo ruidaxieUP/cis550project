@@ -759,6 +759,45 @@ const getPersonCollaborators = async function (req, res) {
   });
 };
 
+// Route 15: GET /api/search-persons
+const searchPersons = async function (req, res) {
+  const { query = "", page = 1, pageSize = 10 } = req.query;
+
+  if (!query.trim()) {
+    return res.status(400).json({ error: "Query parameter is required." });
+  }
+
+  const offset = (page - 1) * pageSize;
+
+  const sqlQuery = `
+    SELECT id, profile_path, known_for_department, name
+    FROM person_details
+    WHERE LOWER(name) LIKE $1
+    ORDER BY popularity DESC
+    LIMIT $2 OFFSET $3;
+  `;
+
+  connection.query(
+    sqlQuery,
+    [`%${query.toLowerCase()}%`, parseInt(pageSize), offset],
+    (err, data) => {
+      if (err) {
+        console.error("Error fetching search results:", err);
+        res.status(500).json({ error: "Internal server error" });
+      } else {
+        res.json({
+          results: data.rows.map((row) => ({
+            id: row.id,
+            profile_path: make_picture_url(picture_size, row.profile_path),
+            known_for_department: row.known_for_department || "Unknown",
+            name: row.name,
+          })),
+        });
+      }
+    }
+  );
+};
+// Export the functions
 module.exports = {
   getMovies, // Bowen Xiang added on Nov 27
   getPersons,
@@ -775,4 +814,5 @@ module.exports = {
   getPersonGenres,
   getPersonKnownFor,
   getPersonCollaborators,
+  searchPersons,
 };
