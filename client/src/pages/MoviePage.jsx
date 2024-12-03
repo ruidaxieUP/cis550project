@@ -24,9 +24,6 @@ export default function MoivePage() {
     );
   }, [currentPage, filter]);
 
-  console.log("Fetch URL:", `movies?page=${currentPage}&pageSize=${pageSize}&filter=${filter}`);
-
-
   // Fetch random background image
   useEffect(() => {
     let isMounted = true;
