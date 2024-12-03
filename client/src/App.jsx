@@ -3,7 +3,6 @@ import NavBar from './components/NavBar';
 import HomePage from './pages/HomePage';
 import PersonPage from './pages/PersonPage';
 import MoviePage from './pages/MoviePage';
-import ContactPage from './pages/ContactPage';
 import PersonInfoPage from './pages/PersonInfoPage.jsx';
 import MovieInfoPage from './pages/MovieInfoPage';
 import Footer from './components/Footer';
@@ -20,7 +19,6 @@ function App() {
         <Route path="/persons/:person_id" element={<PersonInfoPage />} />
         <Route path="/movies" element={<MoviePage />} />
         <Route path="/movies/:movie_id" element={<MovieInfoPage />} />
-        <Route path="/contact" element={<ContactPage />} />
       </Routes>
       <Footer />
     </Router>
