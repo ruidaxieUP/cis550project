@@ -6,6 +6,7 @@ import MoviePage from './pages/MoviePage';
 import ContactPage from './pages/ContactPage';
 import PersonInfoPage from './pages/PersonInfoPage.jsx';
 import MovieInfoPage from './pages/MovieInfoPage';
+import Footer from './components/Footer';
 
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
         <Route path="/movies/:movie_id" element={<MovieInfoPage />} />
         <Route path="/contact" element={<ContactPage />} />
       </Routes>
+      <Footer />
     </Router>
     </>
   )
