@@ -6,100 +6,6 @@ import Card from "../components/ImageCard/KnownForCard";
 import Pagination from "../components/Pagination";
 import { fetchDataById } from "./utils";
 
-// mock data
-const mockPersonData = {
-  id: 976,
-  name: "Jason Statham",
-  imagePath: "https://media.istockphoto.com/id/922962354/vector/no-image-available-sign.jpg?s=612x612&w=0&k=20&c=xbGzQiL_UIMFDUZte1U0end0p3E8iwocIOGt_swlywE=",
-  bio: `Jason Statham (born July 26, 1967) is an English actor. He is known for portraying characters in various action-thriller films who are typically tough, hardboiled, gritty, or violent.
-
-Statham began practicing Chinese martial arts, kickboxing, and karate recreationally in his youth while working at local market stalls. An avid footballer and diver, he was a member of Britain's national diving team and competed for England in the 1990 Commonwealth Games. Shortly after, he was asked to model for French Connection, Tommy Hilfiger, and Levi's in various advertising campaigns. His past history working at market stalls inspired his casting in the Guy Ritchie crime films Lock, Stock and Two Smoking Barrels (1998) and Snatch (2000).
-
-The commercial success of these films led Statham to star as Frank Martin in the Transporter trilogy (2002–2008). After starring in a variety of heist and action-thriller films such as The Italian Job (2003), Crank (2006), War (2007), The Bank Job (2008), The Mechanic (2011), Spy (2015), and Mechanic: Resurrection (2016), he established himself as a Hollywood leading man. However, he has also starred in commercially and critically unsuccessful films such as Revolver (2005), Chaos (2005), In the Name of the King (2007), 13 (2010), Blitz (2011), Killer Elite (2011), Hummingbird (2013), and Wild Card (2015). He regained commercial success as a part of the ensemble action series The Expendables (2010–2014) and the Fast & Furious franchise. In the latter, he has played Deckard Shaw in Fast & Furious 6 (2013), Furious 7 (2015), The Fate of the Furious (2017), F9 (2021) and the spin-off Fast & Furious Presents: Hobbs & Shaw (2019). He was credited as a co-producer on Hobbs & Shaw, receiving his first production credit.
-
-His acting has been criticized for lacking depth and variety, but he has also been praised for leading the resurgence of action films during the 2000s and 2010s. According to a BBC News report, his film career from 2002 to 2017 generated an estimated $1.5 billion (£1.1 billion) in ticket sales, making him one of the film industry's most bankable stars.`,
-  knownForDepartment: "Acting",
-};
-
-const mockTopCollaborators = [
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/180",
-  },
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/180",
-  },
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/180",
-  },
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/180",
-  },
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/180",
-  },
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/180",
-  },
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/180",
-  },
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/300",
-  },
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/180",
-  },
-  {
-    title: "Dwayne Johnson",
-    src: "https://via.placeholder/180",
-  },
-];
-
-const mockGenres = [
-  { id: 80, name: "Crime" },
-  { id: 18, name: "Drama" },
-  { id: 10749, name: "Romance" },
-];
-
-
-// Temporary Mock API, backend will be implemented later
-const mockKnownForData = Array.from({ length: 180 }, (_, index) => ({
-  posterPath: "https://via.placeholder.com/241x247",
-  movieName: `Movie Name ${index + 1}`,
-  characterName: `Character Name ${index + 1}`,
-  rating: (Math.random() * 4 + 6).toFixed(1), // Random rating between 6.0 and 10.0
-}));
-
-//Temporary Mock API, backend will be implemented later
-function fetchKnownForData(knownForData, page = 1, pageSize = 8) {
-  const totalItems = knownForData.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const startIndex = (page - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, totalItems);
-  const result = knownForData.slice(startIndex, endIndex);
-  
-  console.log('totalItems', totalItems);
-  console.log('totalPages', totalPages);
-  console.log('startIndex', startIndex);
-  console.log('endIndex', endIndex);
-  console.log('result', result);
-  return {
-    result,
-    currentPage: page,
-    totalPages,
-    totalItems,
-  };
-}
-
 export default function PeopleInfoPage() {
   const [personData, setPersonData] = useState(null);
   const [personGenres, setPersonGenres] = useState([]);
@@ -111,33 +17,39 @@ export default function PeopleInfoPage() {
 
   useEffect(() => {
     setTimeout(() => {
-      fetchDataById('persons', person_id, setPersonData);
-      fetchDataById('person-genres', person_id, setPersonGenres);
-      fetchDataById('person-known-for', person_id, setKnownForData);
-      fetchDataById('person-collaborators', person_id, setCollaborators);
-      loadPageData(currentPage);
+      fetchDataById("persons", person_id, setPersonData);
+      fetchDataById("person-genres", person_id, setPersonGenres);
+      fetchDataById("person-collaborators", person_id, setCollaborators);
     }, 500);
   }, []);
 
-  const loadPageData = (page) => {
-    const { result, currentPage, totalPages } = fetchKnownForData(knownForData, page);
-    
-    console.log('result', result);
-    console.log('currentPage', currentPage);
-    console.log('totalPages', totalPages);
+  useEffect(() => {
+    // Fetch paginated "known for" data when currentPage changes
+    fetchKnownForData(person_id, currentPage);
+  }, [person_id, currentPage]);
 
-    setKnownForData(result);
-    setCurrentPage(currentPage);
-    setTotalPages(totalPages);
+  const fetchKnownForData = async (personId, page) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/person-known-for/${personId}?page=${page}&pageSize=8`
+      );
+      const data = await response.json();
+      setKnownForData(data.results);
+      setCurrentPage(data.currentPage);
+      setTotalPages(data.totalPages);
+    } catch (error) {
+      console.error("Error fetching known-for data:", error);
+    }
   };
 
   const handlePageChange = (page) => {
-    loadPageData(page);
+    setCurrentPage(page);
   };
 
   if (!personData) {
     return <div className="text-center text-xl">Loading...</div>;
   }
+
 
   return (
     <div className="main-container flex flex-col items-center gap-16 py-[64px]">
