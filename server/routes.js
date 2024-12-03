@@ -591,6 +591,10 @@ const getPersonGenres = async function (req, res) {
 // Route 13: GET /api/person-known-for/:person_id
 const getPersonKnownFor = async function (req, res) {
   const person_id = req.params.person_id;
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 8; // Default to 8 items per page
+  const offset = (page - 1) * pageSize;
+
   query = `
     with cast_crew as (
         select name, character, movie_id, person_id, popularity, profile_path
@@ -604,26 +608,56 @@ const getPersonKnownFor = async function (req, res) {
     join movie_details
     on cast_crew.movie_id = movie_details.id
     where person_id = ${person_id}
-    order by movie_details.popularity desc;
+    order by movie_details.popularity desc
+    limit ${pageSize} offset ${offset};
   `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(
-        data.rows.map((row) => ({
-          posterPath: make_picture_url(picture_size, row.poster_path),
-          movieName: row.title,
-          characterName: row.character,
-          rating: row.vote_average,
-        }))
-      );
-    }
-  });
+
+  // Query to get the total count of results for pagination
+  const countQuery = `
+    with cast_crew as (
+        select name, character, movie_id, person_id, popularity, profile_path
+        FROM movie_cast
+        UNION ALL
+        SELECT name, 'Director' as character, movie_id, person_id, popularity, profile_path
+        FROM movie_crew
+    )
+    SELECT COUNT(*) AS total
+    FROM cast_crew
+    JOIN movie_details
+    ON cast_crew.movie_id = movie_details.id
+    WHERE person_id = ${person_id};
+  `;
+
+  try{
+    const [data, countData] = await Promise.all([
+      connection.query(query),
+      connection.query(countQuery),
+    ]);
+
+    const totalItems = parseInt(countData.rows[0].total, 10);
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    res.json({
+      results: data.rows.map((row) => ({
+        posterPath: make_picture_url(picture_size, row.poster_path),
+        movieName: row.title,
+        characterName: row.character,
+        rating: row.vote_average,
+      })),
+      currentPage: page,
+      totalPages,
+      totalItems,
+    });
+  } catch (err) {
+    console.error("Error fetching person known for:", err);
+    res.status(500).json({
+      error: "Internal server error",
+      details: err.message,
+    });
+  }
 };
 
-// Route 14: GET /api/person-known-for/:person_id
+// Route 14: GET /api/person-collaborators/:person_id
 const getPersonCollaborators = async function (req, res) {
   const person_id = req.params.person_id;
   query = `
