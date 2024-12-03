@@ -8,66 +8,43 @@ import MovieCard from "../components/ImageCard/MoiveRectImageCard";
 import Pagination from "../components/Pagination";
 import { fetchDataById } from "./utils";
 
-
-// Temporary Mock API, backend will be implemented later
-const mockMoreLikeThis = Array.from({ length: 180 }, (_, index) => ({
-  id: index + 1,
-  image: "https://via.placeholder.com/241x247",
-  title: `Movie ${index + 1}`,
-  rating: (Math.random() * 4 + 6).toFixed(1), 
-  genres: [
-    { id: 18, name: "Drama" },
-    { id: 80, name: "Crime" },
-  ],
-}));
-
-// Temporary Mock API, backend will be implemented later
-function fetchMoreLikeThis(moreLikeThis, page = 1, pageSize = 8) {
-  console.log('moreLikeThis', moreLikeThis);
-  const totalItems = moreLikeThis.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const startIndex = (page - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, totalItems);
-
-  const result = moreLikeThis.slice(startIndex, endIndex);
-  console.log('result', result);
-  return {
-    result,
-    currentPage: page,
-    totalPages,
-    totalItems,
-  };
-}
-
 export default function MovieInfoPage() {
   const [movieData, setMovieData] = useState(null);
   const [castData, setCastData] = useState([]);
   const [genreData, setGenreData] = useState([]);
   const [moreLikeThis, setMoreLikeThis] = useState([]);
-  const [movies, setMovies] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const { movie_id } = useParams();
 
   useEffect(() => {
-    // Simulate fetching movie data and paginated data
     setTimeout(() => {
       fetchDataById("movies", movie_id, setMovieData);
       fetchDataById("movie-casts", movie_id, setCastData);
       fetchDataById("movie-genres", movie_id, setGenreData);
-      fetchDataById("similar-movies", movie_id, setMoreLikeThis);
-      loadPageData(currentPage);
     }, 500);
-  }, []);
-  const loadPageData = (page) => {
-    const { result, currentPage, totalPages } = fetchMoreLikeThis(moreLikeThis, page);
-    setMovies(result);
-    setCurrentPage(currentPage);
-    setTotalPages(totalPages);
+  }, [movie_id]);
+
+  useEffect(() => {
+    fetchSimilarMovieData(movie_id, currentPage);
+  }, [movie_id, currentPage]);
+
+  const fetchSimilarMovieData = async (movie_id, page) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/similar-movies/${movie_id}?page=${page}&pageSize=8`
+      );
+      const data = await response.json();
+      setMoreLikeThis(data.results);
+      setCurrentPage(data.currentPage);
+      setTotalPages(data.totalPages);
+    } catch (error) {
+      console.error("Error fetching known-for data:", error);
+    }
   };
 
   const handlePageChange = (page) => {
-    loadPageData(page);
+    setCurrentPage(page);
   };
 
   if (!movieData) {
@@ -83,7 +60,6 @@ export default function MovieInfoPage() {
     status,
     director,
     cast,
-    release_date,
     duration,
     budget,
     revenue,
@@ -184,7 +160,7 @@ export default function MovieInfoPage() {
           More Like This
         </span>
         <div className="grid grid-cols-4 gap-4">
-          {movies.map((movie) => (
+          {moreLikeThis.map((movie) => (
             <MovieCard
               key={movie.id}
               image={movie.image}
