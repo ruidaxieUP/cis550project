@@ -24,7 +24,6 @@ export default function PeopleInfoPage() {
   });
 
   useEffect(() => {
-    // Fetch paginated "known for" data when currentPage changes
     fetchKnownForData(person_id, currentPage);
   }, [person_id, currentPage]);
 
