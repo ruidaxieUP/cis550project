@@ -13,6 +13,11 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Attach Redis client to req
+app.use((req, res, next) => {
+  req.redisClient = redisClient; 
+  next();
+});
 
 // We use express to define our various API endpoints and
 // provide their handlers that we implemented in routes.js
