@@ -659,7 +659,12 @@ const getPersonKnownFor = async function (req, res) {
         select name, 'Director' as character, movie_id, person_id, popularity, profile_path
         from movie_crew
     )
-    select poster_path, movie_details.title, character, vote_average
+    select 
+        movie_details.id AS movie_id,
+        movie_details.poster_path,
+        movie_details.title,
+        cast_crew.character,
+        movie_details.vote_average
     from cast_crew
     join movie_details
     on cast_crew.movie_id = movie_details.id
@@ -695,6 +700,7 @@ const getPersonKnownFor = async function (req, res) {
 
     res.json({
       results: data.rows.map((row) => ({
+        movieId: row.movie_id, // Include movie_id in the response
         posterPath: make_picture_url(picture_size, row.poster_path),
         movieName: row.title,
         characterName: row.character,

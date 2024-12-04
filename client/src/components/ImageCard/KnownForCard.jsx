@@ -1,8 +1,9 @@
 import PropTypes from "prop-types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { Link } from "react-router-dom";
 
-export default function Card({ posterPath, movieName, characterName, rating }) {
+export default function Card({ posterPath, movieName, characterName, rating, movieId }) {
   return (
     <div className="flex flex-col w-[240px] p-[16px] bg-[#fff] rounded-[8px] border border-[#d9d9d9]">
       {/* Image Section */}
@@ -15,9 +16,12 @@ export default function Card({ posterPath, movieName, characterName, rating }) {
 
       {/* Title Section */}
       <div className="flex flex-col gap-[8px]">
-        <span className="text-[16px] font-['Inter'] font-normal leading-[22px] text-[#1e1e1e]">
+        <Link
+          to={`/movies/${movieId}`}
+          className="text-[16px] font-['Inter'] font-normal leading-[22px] text-[#1e1e1e] hover:underline"
+        >
           {movieName}
-        </span>
+        </Link>
       </div>
 
       {/* Subtitle Section */}
@@ -41,4 +45,6 @@ Card.propTypes = {
   movieName: PropTypes.string.isRequired, 
   characterName: PropTypes.string.isRequired, 
   rating: PropTypes.number.isRequired, 
+  movieId: PropTypes.number.isRequired,
+
 };
