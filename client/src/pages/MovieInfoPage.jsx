@@ -149,6 +149,7 @@ export default function MovieInfoPage() {
               image={item.image}
               characterName={item.characterName}
               actorName={item.actorName}
+              actorId={item.id}
             />
           ))}
         </div>
