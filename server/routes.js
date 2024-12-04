@@ -67,7 +67,6 @@ const topDirectors = async function (req, res) {
   }
 };
 
-
 // Route 2: GET /api/top-actors
 const topActors = async function (req, res) {
   const redisClient = req.redisClient; 
@@ -111,8 +110,6 @@ const topActors = async function (req, res) {
   }
 };
 
-
-
 // Route 3: GET /api/top-actresses
 const topActresses = async function (req, res) {
   const redisClient = req.redisClient; 
@@ -155,8 +152,6 @@ const topActresses = async function (req, res) {
     });
   }
 };
-
-
 
 // Route 4: GET /api/top-combos
 const topCombos = async function (req, res) {
@@ -226,9 +221,7 @@ const topCombos = async function (req, res) {
   }
 };
 
-
-
-// Bowen Xiang: Movie main page
+// Route 5: Get /api/movies Bowen Xiang: Movie main page
 const getMovies = async function (req, res) {
   const redisClient = req.redisClient; 
   const page = parseInt(req.query.page) || 1;
@@ -322,8 +315,7 @@ const getMovies = async function (req, res) {
   }
 };
 
-
-// Route 7: GET /api/random
+// Route 6: GET /api/random
 const getRandom = async function (req, res) {
   const query = `
     SELECT id,
@@ -395,7 +387,7 @@ const getRandom = async function (req, res) {
 
 // Route 8: GET /api/persons
 
-// Route 8: GET /api/persons
+// Route 7: GET /api/persons
 const getPersons = async (req, res) => {
   const redisClient = req.redisClient; // Fetch redis client from the request object
   const page = Math.max(parseInt(req.query.page) || 1, 1); // Ensure page >= 1
@@ -490,7 +482,7 @@ const getPersons = async (req, res) => {
   }
 };
 
-// Route 9: GET /api/movies/:movie_id
+// Route 8: GET /api/movies/:movie_id
 const getMovieInfo = async function (req, res) {
   const redisClient = req.redisClient; // Get the Redis client from the request
   const movie_id = req.params.movie_id;
@@ -573,7 +565,7 @@ const getMovieInfo = async function (req, res) {
   }
 };
 
-// Route 10: GET /api/movie-casts/:movie_id
+// Route 9: GET /api/movie-casts/:movie_id
 const getMovieCasts = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const movie_id = req.params.movie_id;
@@ -619,7 +611,7 @@ const getMovieCasts = async function (req, res) {
   }
 };
 
-// Route 11: GET /api/movie-genres/:movie_id
+// Route 10: GET /api/movie-genres/:movie_id
 const getMovieGenres = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const movie_id = req.params.movie_id;
@@ -661,7 +653,7 @@ const getMovieGenres = async function (req, res) {
   }
 };
 
-// Route 12: GET /api/similar-movies/:movie_id
+// Route 11: GET /api/similar-movies/:movie_id
 const getSimilarMovies = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const movie_id = req.params.movie_id;
@@ -792,7 +784,7 @@ const getSimilarMovies = async function (req, res) {
   }
 };
 
-// Route 13: GET /api/persons/:person_id
+// Route 12: GET /api/persons/:person_id
 const getPersonInfo = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const person_id = req.params.person_id;
@@ -841,7 +833,7 @@ const getPersonInfo = async function (req, res) {
   }
 };
 
-// Route 14: GET /api/person-genres/:movie_id
+// Route 13: GET /api/person-genres/:movie_id
 const getPersonGenres = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const person_id = req.params.person_id;
@@ -898,42 +890,43 @@ const getPersonGenres = async function (req, res) {
   }
 };
 
-// Route 15: GET /api/person-known-for/:person_id
+// Route 14: GET /api/person-known-for/:person_id
 const getPersonKnownFor = async function (req, res) {
+  const redisClient = req.redisClient; // Get Redis client from the request
   const person_id = req.params.person_id;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 8; // Default to 8 items per page
   const offset = (page - 1) * pageSize;
+  const cacheKey = `person_known_for_${person_id}_page_${page}_pageSize_${pageSize}`; // Unique cache key
 
-  query = `
-    with cast_crew as (
-        select name, character, movie_id, person_id, popularity, profile_path
-        from movie_cast
-        union all
-        select name, 'Director' as character, movie_id, person_id, popularity, profile_path
-        from movie_crew
+  const query = `
+    WITH cast_crew AS (
+        SELECT name, character, movie_id, person_id, popularity, profile_path
+        FROM movie_cast
+        UNION ALL
+        SELECT name, 'Director' AS character, movie_id, person_id, popularity, profile_path
+        FROM movie_crew
     )
-    select 
+    SELECT 
         movie_details.id AS movie_id,
         movie_details.poster_path,
         movie_details.title,
         cast_crew.character,
         movie_details.vote_average
-    from cast_crew
-    join movie_details
-    on cast_crew.movie_id = movie_details.id
-    where person_id = ${person_id}
-    order by movie_details.popularity desc
-    limit ${pageSize} offset ${offset};
+    FROM cast_crew
+    JOIN movie_details
+    ON cast_crew.movie_id = movie_details.id
+    WHERE person_id = ${person_id}
+    ORDER BY movie_details.popularity DESC
+    LIMIT ${pageSize} OFFSET ${offset};
   `;
 
-  // Query to get the total count of results for pagination
   const countQuery = `
-    with cast_crew as (
-        select name, character, movie_id, person_id, popularity, profile_path
+    WITH cast_crew AS (
+        SELECT name, character, movie_id, person_id, popularity, profile_path
         FROM movie_cast
         UNION ALL
-        SELECT name, 'Director' as character, movie_id, person_id, popularity, profile_path
+        SELECT name, 'Director' AS character, movie_id, person_id, popularity, profile_path
         FROM movie_crew
     )
     SELECT COUNT(*) AS total
@@ -944,26 +937,44 @@ const getPersonKnownFor = async function (req, res) {
   `;
 
   try {
+    // Check if data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving person known for person_id: ${person_id} from Redis cache`);
+      return res.json(JSON.parse(cachedData));
+    }
+
+    // Execute both queries using the existing connection
     const [data, countData] = await Promise.all([
       connection.query(query),
       connection.query(countQuery),
     ]);
 
+    // Calculate pagination values
     const totalItems = parseInt(countData.rows[0].total, 10);
     const totalPages = Math.ceil(totalItems / pageSize);
 
-    res.json({
-      results: data.rows.map((row) => ({
-        movieId: row.movie_id, // Include movie_id in the response
-        posterPath: make_picture_url(picture_size, row.poster_path),
-        movieName: row.title,
-        characterName: row.character,
-        rating: row.vote_average,
-      })),
+    // Prepare and transform the response data
+    const results = data.rows.map((row) => ({
+      movieId: row.movie_id, // Include movie_id in the response
+      posterPath: make_picture_url(picture_size, row.poster_path),
+      movieName: row.title,
+      characterName: row.character,
+      rating: row.vote_average,
+    }));
+
+    const response = {
+      results,
       currentPage: page,
       totalPages,
       totalItems,
-    });
+    };
+
+    // Cache the response with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
+
+    console.log(`Serving person known for person_id: ${person_id} from database`);
+    res.json(response);
   } catch (err) {
     console.error("Error fetching person known for:", err);
     res.status(500).json({
@@ -973,53 +984,74 @@ const getPersonKnownFor = async function (req, res) {
   }
 };
 
-// Route 16: GET /api/person-collaborators/:person_id
+// Route 15: GET /api/person-collaborators/:person_id
 const getPersonCollaborators = async function (req, res) {
+  const redisClient = req.redisClient; // Get Redis client from the request
   const person_id = req.params.person_id;
-  query = `
-    with cast_crew as (
-        select name, profile_path, movie_id, person_id, popularity
-        from movie_cast
-        union all
-        select name, profile_path, movie_id, person_id, popularity
-        from movie_crew
+  const cacheKey = `person_collaborators_${person_id}`; // Unique cache key for collaborators
+
+  const query = `
+    WITH cast_crew AS (
+        SELECT name, profile_path, movie_id, person_id, popularity
+        FROM movie_cast
+        UNION ALL
+        SELECT name, profile_path, movie_id, person_id, popularity
+        FROM movie_crew
     ),
-    top_collaborators as (
-        select name, profile_path, popularity
-        from cast_crew
-        where cast_crew.person_id <> ${person_id}
-        and movie_id in (select movie_id
-                      from cast_crew
-                      where person_id = ${person_id})
+    top_collaborators AS (
+        SELECT name, profile_path, popularity
+        FROM cast_crew
+        WHERE cast_crew.person_id <> ${person_id}
+        AND movie_id IN (
+            SELECT movie_id
+            FROM cast_crew
+            WHERE person_id = ${person_id}
+        )
     ),
     ordered_rows AS (
-        SELECT
-            *,
+        SELECT *,
             ROW_NUMBER() OVER (PARTITION BY name) AS row_num
         FROM top_collaborators
     )
     SELECT name, profile_path
     FROM ordered_rows
-    where row_num = 1
-    order by popularity desc
-    limit 10;
+    WHERE row_num = 1
+    ORDER BY popularity DESC
+    LIMIT 10;
   `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(
-        data.rows.map((row) => ({
-          src: make_picture_url(picture_size, row.profile_path),
-          title: row.name,
-        }))
-      );
+
+  try {
+    // Check if data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving collaborators for person_id: ${person_id} from Redis cache`);
+      return res.json(JSON.parse(cachedData));
     }
-  });
+
+    // Query the database if no cache exists
+    const data = await connection.query(query);
+
+    // Process the result
+    const result = data.rows.map((row) => ({
+      src: make_picture_url(picture_size, row.profile_path),
+      title: row.name,
+    }));
+
+    // Store the result in Redis with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+
+    console.log(`Serving collaborators for person_id: ${person_id} from database`);
+    res.json(result);
+  } catch (err) {
+    console.error("Error fetching person collaborators:", err);
+    res.status(500).json({
+      error: "Internal server error",
+      details: err.message,
+    });
+  }
 };
 
-// Route 17: GET /api/search-persons
+// Route 16: GET /api/search-persons
 const searchPersons = async function (req, res) {
   const { query = "", page = 1, pageSize = 10 } = req.query;
 
