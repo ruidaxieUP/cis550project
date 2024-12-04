@@ -573,67 +573,103 @@ const getMovieInfo = async function (req, res) {
   }
 };
 
-
 // Route 10: GET /api/movie-casts/:movie_id
 const getMovieCasts = async function (req, res) {
+  const redisClient = req.redisClient; // Get Redis client from the request
   const movie_id = req.params.movie_id;
-  query = `
-    select person_id, profile_path, character, name
-    from movie_cast
-    join movie_details
-    on movie_cast.movie_id = movie_details.id
-    where movie_id = ${movie_id}
-    order by movie_cast.popularity desc
-    limit 10;
+  const cacheKey = `movie_casts_${movie_id}`; // Define a unique cache key for this movie ID
+
+  const query = `
+    SELECT person_id, profile_path, character, name
+    FROM movie_cast
+    JOIN movie_details
+    ON movie_cast.movie_id = movie_details.id
+    WHERE movie_id = ${movie_id}
+    ORDER BY movie_cast.popularity DESC
+    LIMIT 10;
   `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(
-        data.rows.map((row) => ({
-          id: row.person_id,
-          image: make_picture_url(picture_size, row.profile_path),
-          characterName: row.character,
-          actorName: row.name,
-        }))
-      );
+
+  try {
+    // Check if the data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving movie casts for movie_id: ${movie_id} from Redis cache`);
+      return res.json(JSON.parse(cachedData)); // Serve cached data
     }
-  });
+
+    // Execute the query if no cached data is found
+    const data = await connection.query(query);
+
+    // Process the result
+    const result = data.rows.map((row) => ({
+      id: row.person_id,
+      image: make_picture_url(picture_size, row.profile_path),
+      characterName: row.character,
+      actorName: row.name,
+    }));
+
+    // Store the result in Redis with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+
+    console.log(`Serving movie casts for movie_id: ${movie_id} from database`);
+    res.json(result);
+  } catch (err) {
+    console.error(`Error fetching movie casts for movie_id: ${movie_id}`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 // Route 11: GET /api/movie-genres/:movie_id
 const getMovieGenres = async function (req, res) {
+  const redisClient = req.redisClient; // Get Redis client from the request
   const movie_id = req.params.movie_id;
-  query = `
-    select distinct genres.id, genres.name
-    from genres
-    join movie_genres
-    on genres.id = movie_genres.genre_id
-    where movie_id = ${movie_id};
+  const cacheKey = `movie_genres_${movie_id}`; // Define a unique cache key for this movie ID
+
+  const query = `
+    SELECT DISTINCT genres.id, genres.name
+    FROM genres
+    JOIN movie_genres
+    ON genres.id = movie_genres.genre_id
+    WHERE movie_id = ${movie_id};
   `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(
-        data.rows.map((row) => ({
-          id: row.id,
-          name: row.name,
-        }))
-      );
+
+  try {
+    // Check if the data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving movie genres for movie_id: ${movie_id} from Redis cache`);
+      return res.json(JSON.parse(cachedData)); // Serve cached data
     }
-  });
+
+    // Execute the query if no cached data is found
+    const data = await connection.query(query);
+
+    // Process the result
+    const result = data.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+    }));
+
+    // Store the result in Redis with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+
+    console.log(`Serving movie genres for movie_id: ${movie_id} from database`);
+    res.json(result);
+  } catch (err) {
+    console.error(`Error fetching movie genres for movie_id: ${movie_id}`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 // Route 12: GET /api/similar-movies/:movie_id
 const getSimilarMovies = async function (req, res) {
+  const redisClient = req.redisClient; // Get Redis client from the request
   const movie_id = req.params.movie_id;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 8;
   const offset = (page - 1) * pageSize;
+
+  const cacheKey = `similar_movies_${movie_id}_page_${page}_pageSize_${pageSize}`; // Unique cache key
 
   const query = `
     WITH this_movie_genres AS (
@@ -711,6 +747,14 @@ const getSimilarMovies = async function (req, res) {
   `;
 
   try {
+    // Check if data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving similar movies for movie_id: ${movie_id} from Redis cache`);
+      return res.json(JSON.parse(cachedData));
+    }
+
+    // Execute the queries
     const [data, countData] = await Promise.all([
       connection.query(query),
       connection.query(countQuery),
@@ -727,14 +771,20 @@ const getSimilarMovies = async function (req, res) {
       genres: row.genres,
     }));
 
-    res.json({
+    const response = {
       results,
       currentPage: page,
       totalPages,
       totalItems,
-    });
+    };
+
+    // Cache the response
+    await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
+
+    console.log(`Serving similar movies for movie_id: ${movie_id} from database`);
+    res.json(response);
   } catch (err) {
-    console.error("Error fetching similar movies:", err);
+    console.error(`Error fetching similar movies for movie_id: ${movie_id}`, err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -742,72 +792,113 @@ const getSimilarMovies = async function (req, res) {
   }
 };
 
-
-
-
 // Route 13: GET /api/persons/:person_id
 const getPersonInfo = async function (req, res) {
+  const redisClient = req.redisClient; // Get Redis client from the request
   const person_id = req.params.person_id;
-  query = `
-    select id, name, profile_path, biography, known_for_department
-    from person_details
-    where id = ${person_id};
+  const cacheKey = `person_info_${person_id}`; // Unique cache key for the person
+
+  const query = `
+    SELECT id, name, profile_path, biography, known_for_department
+    FROM person_details
+    WHERE id = ${person_id};
   `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      row = data.rows[0];
-      res.json({
-        id: row.id,
-        name: row.name,
-        imagePath: make_picture_url(picture_size, row.profile_path),
-        knownForDepartment: row.known_for_department,
-        bio: row.biography,
-      });
+
+  try {
+    // Check if data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving person info for person_id: ${person_id} from Redis cache`);
+      return res.json(JSON.parse(cachedData));
     }
-  });
+
+    // Query the database if no cached data exists
+    const data = await connection.query(query);
+    if (data.rows.length === 0) {
+      return res.status(404).json({ error: "Person not found" });
+    }
+
+    const row = data.rows[0];
+    const result = {
+      id: row.id,
+      name: row.name,
+      imagePath: make_picture_url(picture_size, row.profile_path),
+      knownForDepartment: row.known_for_department,
+      bio: row.biography,
+    };
+
+    // Cache the result
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 }); // Cache for 1 hour
+
+    console.log(`Serving person info for person_id: ${person_id} from database`);
+    res.json(result);
+  } catch (err) {
+    console.error(`Error fetching person info for person_id: ${person_id}`, err);
+    res.status(500).json({
+      error: "Internal server error",
+      details: err.message,
+    });
+  }
 };
 
-// Route 12: GET /api/person-genres/:movie_id
+// Route 14: GET /api/person-genres/:movie_id
 const getPersonGenres = async function (req, res) {
+  const redisClient = req.redisClient; // Get Redis client from the request
   const person_id = req.params.person_id;
-  query = `
-    with cast_crew as (
-        select name, profile_path, movie_id, person_id, popularity
-        from movie_cast
-        union all
-        select name, profile_path, movie_id, person_id, popularity
-        from movie_crew
+  const cacheKey = `person_genres_${person_id}`; // Unique cache key for the person's genres
+
+  const query = `
+    WITH cast_crew AS (
+        SELECT name, profile_path, movie_id, person_id, popularity
+        FROM movie_cast
+        UNION ALL
+        SELECT name, profile_path, movie_id, person_id, popularity
+        FROM movie_crew
     )
-    select genre_id, genres.name, count(genres.name) as count
-    from cast_crew
-    join movie_genres
-    on cast_crew.movie_id = movie_genres.movie_id
-    join genres
-    on movie_genres.genre_id = genres.id
-    where person_id = ${person_id}
-    group by genre_id, genres.name
-    order by count desc
-    limit 3;
+    SELECT genre_id, genres.name, COUNT(genres.name) AS count
+    FROM cast_crew
+    JOIN movie_genres
+    ON cast_crew.movie_id = movie_genres.movie_id
+    JOIN genres
+    ON movie_genres.genre_id = genres.id
+    WHERE person_id = ${person_id}
+    GROUP BY genre_id, genres.name
+    ORDER BY count DESC
+    LIMIT 3;
   `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(
-        data.rows.map((row) => ({
-          id: row.genre_id,
-          name: row.name,
-        }))
-      );
+
+  try {
+    // Check if data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving person genres for person_id: ${person_id} from Redis cache`);
+      return res.json(JSON.parse(cachedData));
     }
-  });
+
+    // Query the database if no cached data exists
+    const data = await connection.query(query);
+
+    // Transform the query result
+    const result = data.rows.map((row) => ({
+      id: row.genre_id,
+      name: row.name,
+    }));
+
+    // Cache the result
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 }); // Cache for 1 hour
+
+    console.log(`Serving person genres for person_id: ${person_id} from database`);
+    res.json(result);
+  } catch (err) {
+    console.error(`Error fetching person genres for person_id: ${person_id}`, err);
+    res.status(500).json({
+      error: "Internal server error",
+      details: err.message,
+    });
+  }
 };
 
-// Route 13: GET /api/person-known-for/:person_id
+// Route 15: GET /api/person-known-for/:person_id
 const getPersonKnownFor = async function (req, res) {
   const person_id = req.params.person_id;
   const page = parseInt(req.query.page) || 1;
@@ -882,7 +973,7 @@ const getPersonKnownFor = async function (req, res) {
   }
 };
 
-// Route 14: GET /api/person-collaborators/:person_id
+// Route 16: GET /api/person-collaborators/:person_id
 const getPersonCollaborators = async function (req, res) {
   const person_id = req.params.person_id;
   query = `
@@ -928,7 +1019,7 @@ const getPersonCollaborators = async function (req, res) {
   });
 };
 
-// Route 15: GET /api/search-persons
+// Route 17: GET /api/search-persons
 const searchPersons = async function (req, res) {
   const { query = "", page = 1, pageSize = 10 } = req.query;
 
@@ -966,6 +1057,7 @@ const searchPersons = async function (req, res) {
     }
   );
 };
+
 // Export the functions
 module.exports = {
   getMovies, // Bowen Xiang added on Nov 27
