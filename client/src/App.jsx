@@ -6,6 +6,7 @@ import MoviePage from './pages/MoviePage';
 import PersonInfoPage from './pages/PersonInfoPage.jsx';
 import MovieInfoPage from './pages/MovieInfoPage';
 import Footer from './components/Footer';
+import './index.css';
 
 
 function App() {
