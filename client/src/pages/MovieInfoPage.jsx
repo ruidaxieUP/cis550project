@@ -18,12 +18,17 @@ export default function MovieInfoPage() {
   const { movie_id } = useParams();
 
   useEffect(() => {
-    setTimeout(() => {
+    const fetchMovieData = () => {
       fetchDataById("movies", movie_id, setMovieData);
       fetchDataById("movie-casts", movie_id, setCastData);
       fetchDataById("movie-genres", movie_id, setGenreData);
-    }, 500);
+    };
+  
+    const timeoutId = setTimeout(fetchMovieData, 500);
+  
+    return () => clearTimeout(timeoutId);
   }, [movie_id]);
+  
 
   useEffect(() => {
     fetchSimilarMovieData(movie_id, currentPage);
