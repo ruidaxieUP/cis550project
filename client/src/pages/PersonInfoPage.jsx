@@ -93,6 +93,7 @@ export default function PeopleInfoPage() {
               movieName={item.movieName}
               characterName={item.characterName}
               rating={parseFloat(item.rating)}
+              movieId={item.movieId} 
             />
           ))}
         </div>

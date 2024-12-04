@@ -149,6 +149,7 @@ export default function MovieInfoPage() {
               image={item.image}
               characterName={item.characterName}
               actorName={item.actorName}
+              actorId={item.id}
             />
           ))}
         </div>
@@ -167,6 +168,7 @@ export default function MovieInfoPage() {
               title={movie.title}
               rating={parseFloat(movie.rating)}
               genres={movie.genres}
+              itemId={movie.id}
             />
           ))}
         </div>

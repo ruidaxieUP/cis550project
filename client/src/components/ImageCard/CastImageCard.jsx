@@ -1,6 +1,7 @@
 import PropTypes from "prop-types";
+import { Link } from "react-router-dom";
 
-const CastImageCard = ({ image, characterName, actorName }) => {
+const CastImageCard = ({ image, characterName, actorName, actorId }) => {
   return (
     <div className="main-container w-[182px] h-[235.401px] text-[0px] relative mx-auto my-0">
       {/* Character Name */}
@@ -8,10 +9,13 @@ const CastImageCard = ({ image, characterName, actorName }) => {
         {characterName}
       </span>
 
-      {/* Actor Name */}
-      <span className="flex w-[176.551px] h-[23.976px] justify-center items-center font-['Inter'] text-[16px] font-normal leading-[22.4px] text-[#000] relative text-center whitespace-nowrap z-[2] mt-[-5.551px] mr-0 mb-0 ml-0">
+      {/* Actor Name as Link */}
+      <Link
+        to={`/persons/${actorId}`}
+        className="flex w-[176.551px] h-[23.976px] justify-center items-center font-['Inter'] text-[16px] font-normal leading-[22.4px] text-[#000] relative text-center whitespace-nowrap z-[2] mt-[-5.551px] mr-0 mb-0 ml-0 hover:underline"
+      >
         {actorName}
-      </span>
+      </Link>
 
       {/* Circular Image */}
       <div
@@ -28,6 +32,7 @@ CastImageCard.propTypes = {
   image: PropTypes.string.isRequired,
   characterName: PropTypes.string.isRequired,
   actorName: PropTypes.string.isRequired,
+  actorId: PropTypes.number.isRequired, // Actor ID for the link
 };
 
 export default CastImageCard;
