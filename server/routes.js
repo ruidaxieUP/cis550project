@@ -110,7 +110,6 @@ const topActors = async function (req, res) {
 // Route 3: GET /api/top-actresses
 const topActresses = async function (req, res) {
   const cacheKey = "top_actresses"; // Define a unique cache key for actresses
-
   try {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
@@ -154,53 +153,73 @@ const topActresses = async function (req, res) {
 
 // Route 4: GET /api/top-combos
 const topCombos = async function (req, res) {
-  query = `
-    with cast_director as (
-        select movie_cast.person_id as cast_id,
-                movie_cast.name as actor_name,
-                movie_cast.profile_path as actor_image,
-                movie_crew.person_id as director_id,
-                movie_crew.name as director_name,
-                movie_crew.profile_path as director_image,
-                movie_details.vote_average as rating
-        from movie_cast
-        join movie_crew
-        on movie_cast.movie_id = movie_crew.movie_id
-        join movie_details
-        on movie_cast.movie_id = movie_details.id
-        where movie_crew.job = 'Director'
-        and movie_cast.profile_path is not null
-        and movie_crew.profile_path is not null
-    ),
-    best_combo as (
-        select distinct on (director_id)
-            actor_name, actor_image, director_name, director_id, director_image, avg(rating) as average_rating
-        from cast_director
-        group by actor_name, actor_image, director_name, director_id, director_image
-        having count(rating) > 2
-        order by director_id desc
-    )
-    select actor_name, actor_image, director_name, director_image
-    from best_combo
-    order by average_rating desc
-    limit 10;
-  `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(
-        data.rows.map((row) => ({
-          actorName: row.actor_name,
-          actorImage: make_picture_url(picture_size, row.actor_image),
-          directorName: row.director_name,
-          directorImage: make_picture_url(picture_size, row.director_image),
-        }))
-      );
+  const cacheKey = "top_combos"; // Define a unique cache key for top combos
+
+  try {
+    // Check if the data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log("Serving top combos from Redis cache");
+      return res.json(JSON.parse(cachedData)); // Serve cached data
     }
-  });
+
+    // Query the database if no cache exists
+    const query = `
+      WITH cast_director AS (
+          SELECT 
+              movie_cast.person_id AS cast_id,
+              movie_cast.name AS actor_name,
+              movie_cast.profile_path AS actor_image,
+              movie_crew.person_id AS director_id,
+              movie_crew.name AS director_name,
+              movie_crew.profile_path AS director_image,
+              movie_details.vote_average AS rating
+          FROM movie_cast
+          JOIN movie_crew
+          ON movie_cast.movie_id = movie_crew.movie_id
+          JOIN movie_details
+          ON movie_cast.movie_id = movie_details.id
+          WHERE movie_crew.job = 'Director'
+          AND movie_cast.profile_path IS NOT NULL
+          AND movie_crew.profile_path IS NOT NULL
+      ),
+      best_combo AS (
+          SELECT DISTINCT ON (director_id)
+              actor_name, actor_image, director_name, director_id, director_image, AVG(rating) AS average_rating
+          FROM cast_director
+          GROUP BY actor_name, actor_image, director_name, director_id, director_image
+          HAVING COUNT(rating) > 2
+          ORDER BY director_id DESC
+      )
+      SELECT actor_name, actor_image, director_name, director_image
+      FROM best_combo
+      ORDER BY average_rating DESC
+      LIMIT 10;
+    `;
+    const data = await connection.query(query);
+
+    // Process the result
+    const result = data.rows.map((row) => ({
+      actorName: row.actor_name,
+      actorImage: make_picture_url(picture_size, row.actor_image),
+      directorName: row.director_name,
+      directorImage: make_picture_url(picture_size, row.director_image),
+    }));
+
+    // Store the result in Redis with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+
+    console.log("Serving top combos from database");
+    res.json(result);
+  } catch (err) {
+    console.error("Error fetching top combos:", err);
+    res.status(500).json({
+      error: "Internal server error",
+      details: err.message,
+    });
+  }
 };
+
 
 // Bowen Xiang: Movie main page
 const getMovies = async function (req, res) {
