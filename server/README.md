@@ -13,6 +13,9 @@
    ```bash
    npm start
    ```
+   ```bash
+   node server.js
+   ```
    The server will run on `http://localhost:8080`.
 
 ---
