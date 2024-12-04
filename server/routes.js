@@ -490,65 +490,89 @@ const getPersons = async (req, res) => {
   }
 };
 
-
-
 // Route 9: GET /api/movies/:movie_id
 const getMovieInfo = async function (req, res) {
+  const redisClient = req.redisClient; // Get the Redis client from the request
   const movie_id = req.params.movie_id;
-  query = `
-    with top_5_cast as
-        (select movie_id, name
-        from movie_cast
-        where movie_id = ${movie_id}
-        order by popularity desc
-        limit 5),
-    cast_names as
-        (select movie_id, STRING_AGG(name, ', ') AS names
-        from top_5_cast
-        group by movie_id),
-    director_names as
-        (select movie_id, STRING_AGG(name, ', ') AS names
-        from movie_crew
-        where job in ('Director', 'Co-Director')
-        and movie_id = ${movie_id}
-        group by movie_id)
-    select id as movie_id, poster_path, title as movie_name,
-            vote_average as rating, vote_count as votes, status,
-            director_names.names as directors,
-            cast_names.names as casts,
-            extract (year from release_date) as production_year,
-            TO_CHAR(release_date, 'YYYY-MM-DD') AS release_date,
-            runtime as duration,
-            revenue, budget, overview
-    from director_names
-    join cast_names on director_names.movie_id = cast_names.movie_id
-    join movie_details on cast_names.movie_id = movie_details.id
-    order by popularity desc;
+  const cacheKey = `movie_info_${movie_id}`; // Define a unique cache key for this movie ID
+
+  const query = `
+    WITH top_5_cast AS (
+        SELECT movie_id, name
+        FROM movie_cast
+        WHERE movie_id = ${movie_id}
+        ORDER BY popularity DESC
+        LIMIT 5
+    ),
+    cast_names AS (
+        SELECT movie_id, STRING_AGG(name, ', ') AS names
+        FROM top_5_cast
+        GROUP BY movie_id
+    ),
+    director_names AS (
+        SELECT movie_id, STRING_AGG(name, ', ') AS names
+        FROM movie_crew
+        WHERE job IN ('Director', 'Co-Director')
+        AND movie_id = ${movie_id}
+        GROUP BY movie_id
+    )
+    SELECT id AS movie_id, poster_path, title AS movie_name,
+           vote_average AS rating, vote_count AS votes, status,
+           director_names.names AS directors,
+           cast_names.names AS casts,
+           EXTRACT(YEAR FROM release_date) AS production_year,
+           TO_CHAR(release_date, 'YYYY-MM-DD') AS release_date,
+           runtime AS duration,
+           revenue, budget, overview
+    FROM director_names
+    JOIN cast_names ON director_names.movie_id = cast_names.movie_id
+    JOIN movie_details ON cast_names.movie_id = movie_details.id
+    ORDER BY popularity DESC;
   `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      row = data.rows[0];
-      res.json({
-        poster_path: make_picture_url(picture_size, row.poster_path),
-        movie_name: row.movie_name,
-        production_year: row.production_year,
-        rating: parseFloat(row.rating),
-        votes: row.votes,
-        status: row.status,
-        director: row.directors,
-        cast: row.casts,
-        released_date: row.released_date,
-        duration: row.duration,
-        budget: row.budget,
-        revenue: row.revenue,
-        overview: row.overview,
-      });
+
+  try {
+    // Check if the data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving movie info for movie_id: ${movie_id} from Redis cache`);
+      return res.json(JSON.parse(cachedData)); // Serve cached data
     }
-  });
+
+    // Execute the query if no cached data is found
+    const data = await connection.query(query);
+
+    if (data.rows.length === 0) {
+      return res.status(404).json({ error: "Movie not found" });
+    }
+
+    const row = data.rows[0];
+    const result = {
+      poster_path: make_picture_url(picture_size, row.poster_path),
+      movie_name: row.movie_name,
+      production_year: row.production_year,
+      rating: parseFloat(row.rating),
+      votes: row.votes,
+      status: row.status,
+      director: row.directors,
+      cast: row.casts,
+      released_date: row.release_date,
+      duration: row.duration,
+      budget: row.budget,
+      revenue: row.revenue,
+      overview: row.overview,
+    };
+
+    // Store the result in Redis with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+
+    console.log(`Serving movie info for movie_id: ${movie_id} from database`);
+    res.json(result);
+  } catch (err) {
+    console.error(`Error fetching movie info for movie_id: ${movie_id}`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
+
 
 // Route 10: GET /api/movie-casts/:movie_id
 const getMovieCasts = async function (req, res) {
