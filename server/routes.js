@@ -1051,8 +1051,10 @@ const getPersonCollaborators = async function (req, res) {
   }
 };
 
+
 // Route 16: GET /api/search-persons
 const searchPersons = async function (req, res) {
+  const redisClient = req.redisClient; // Get Redis client from the request
   const { query = "", page = 1, pageSize = 10 } = req.query;
 
   if (!query.trim()) {
@@ -1060,6 +1062,7 @@ const searchPersons = async function (req, res) {
   }
 
   const offset = (page - 1) * pageSize;
+  const cacheKey = `search_persons_${query.toLowerCase()}_page_${page}_pageSize_${pageSize}`; // Unique cache key for search query
 
   const sqlQuery = `
     SELECT id, profile_path, known_for_department, name
@@ -1069,26 +1072,42 @@ const searchPersons = async function (req, res) {
     LIMIT $2 OFFSET $3;
   `;
 
-  connection.query(
-    sqlQuery,
-    [`%${query.toLowerCase()}%`, parseInt(pageSize), offset],
-    (err, data) => {
-      if (err) {
-        console.error("Error fetching search results:", err);
-        res.status(500).json({ error: "Internal server error" });
-      } else {
-        res.json({
-          results: data.rows.map((row) => ({
-            id: row.id,
-            profile_path: make_picture_url(picture_size, row.profile_path),
-            known_for_department: row.known_for_department || "Unknown",
-            name: row.name,
-          })),
-        });
-      }
+  try {
+    // Check if data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving search results for query: "${query}" from Redis cache`);
+      return res.json(JSON.parse(cachedData));
     }
-  );
+
+    // Query the database if no cache exists
+    const data = await connection.query(sqlQuery, [
+      `%${query.toLowerCase()}%`,
+      parseInt(pageSize),
+      offset,
+    ]);
+
+    // Process the result
+    const results = data.rows.map((row) => ({
+      id: row.id,
+      profile_path: make_picture_url(picture_size, row.profile_path),
+      known_for_department: row.known_for_department || "Unknown",
+      name: row.name,
+    }));
+
+    const response = { results };
+
+    // Store the result in Redis with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
+
+    console.log(`Serving search results for query: "${query}" from database`);
+    res.json(response);
+  } catch (err) {
+    console.error("Error fetching search results:", err);
+    res.status(500).json({ error: "Internal server error", details: err.message });
+  }
 };
+
 
 // Export the functions
 module.exports = {
