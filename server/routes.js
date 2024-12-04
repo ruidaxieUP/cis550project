@@ -31,7 +31,18 @@ function make_picture_url(size, fname) {
 
 // Route 1: GET /api/top-directors
 const topDirectors = async function (req, res) {
-  query = `
+  const redisClient = req.redisClient; // get redis client from request
+  const cacheKey = "top_directors"; // cache key for top directors
+  
+  try{
+    const cachedData = await redisClient.get(cacheKey);
+    if(cachedData){
+      console.log('Serving from Redis cache');
+      return res.json(JSON.parse(cachedData)); // Serve cached data
+    }
+
+    // Query the database if no cache exists
+    query = `
     SELECT name, profile_path
     FROM person_details
     WHERE known_for_department = 'Directing'
@@ -39,19 +50,25 @@ const topDirectors = async function (req, res) {
     ORDER BY popularity DESC
     LIMIT 10;
   `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(
-        data.rows.map((row) => ({
-          src: make_picture_url(picture_size, row.profile_path),
-          title: row.name,
-        }))
-      );
-    }
-  });
+    const data = await connection.query(query);
+    const result = data.rows.map((row) => ({
+      src: make_picture_url(picture_size, row.profile_path),
+      title: row.name,
+    }));
+
+    // store the result in cache with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+    
+    console.log('Serving from database');
+    res.json(result);
+  }catch(err){
+    console.error("Error fetching top directors:", err);
+    res.status(500).json({
+      error: "Internal server error",
+      details: err.message,
+    });
+  }
+
 };
 
 // Route 2: GET /api/top-actors
