@@ -349,28 +349,81 @@ const getRandom = async function (req, res) {
   });
 };
 
+// redis version of Route 7: getRandom
+// const getRandom = async function (req, res) {
+//   const cacheKey = "random_picture"; // Define a cache key for the random picture
+
+//   try {
+//     // Check if the data is cached in Redis
+//     const cachedData = await redisClient.get(cacheKey);
+//     if (cachedData) {
+//       console.log("Serving random picture from Redis cache");
+//       return res.json(JSON.parse(cachedData)); // Serve cached data
+//     }
+
+//     // Query the database if no cache exists
+//     const query = `
+//       SELECT id,
+//              backdrop_path
+//       FROM movie_details
+//       WHERE backdrop_path IS NOT NULL
+//       ORDER BY RANDOM()
+//       LIMIT 1;
+//     `;
+
+//     const data = await connection.query(query);
+//     if (data.rows.length === 0) {
+//       return res.status(404).json({ error: "No picture found" });
+//     }
+
+//     const row = data.rows[0];
+//     const result = {
+//       src: make_picture_url(picture_size, row.backdrop_path),
+//     };
+
+//     // Store the result in Redis with an expiry of 1 hour
+//     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+
+//     console.log("Serving random picture from database");
+//     res.json(result);
+//   } catch (err) {
+//     console.error("Error fetching random picture:", err);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
+
+
+// Route 8: GET /api/persons
+
 // Route 8: GET /api/persons
 const getPersons = async (req, res) => {
+  const redisClient = req.redisClient; // Fetch redis client from the request object
+  const page = Math.max(parseInt(req.query.page) || 1, 1); // Ensure page >= 1
+  const pageSize = Math.max(parseInt(req.query.pageSize) || 16, 1); // Ensure pageSize >= 1
+  const filter = req.query.filter || "popularity_desc";
+
+  const validFilters = {
+    name_asc: "name ASC",
+    name_desc: "name DESC",
+    popularity_asc: "popularity ASC",
+    popularity_desc: "popularity DESC",
+  };
+
+  const orderClause = validFilters[filter];
+  if (!orderClause) {
+    return res.status(400).json({ error: "Invalid filter value" });
+  }
+
+  const offset = (page - 1) * pageSize;
+  const cacheKey = `persons_page_${page}_pageSize_${pageSize}_filter_${filter}`; // Unique cache key
+
   try {
-    // Parse and validate query parameters
-    const page = Math.max(parseInt(req.query.page) || 1, 1); // Ensure page >= 1
-    const pageSize = Math.max(parseInt(req.query.pageSize) || 16, 1); // Ensure pageSize >= 1
-    const filter = req.query.filter || "popularity_desc";
-
-    const validFilters = {
-      name_asc: "name ASC",
-      name_desc: "name DESC",
-      popularity_asc: "popularity ASC",
-      popularity_desc: "popularity DESC",
-    };
-
-    const orderClause = validFilters[filter];
-    if (!orderClause) {
-      return res.status(400).json({ error: "Invalid filter value" });
+    // Check if the data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log("Serving persons data from Redis cache");
+      return res.json(JSON.parse(cachedData));
     }
-
-    // Calculate offset
-    const offset = (page - 1) * pageSize;
 
     // SQL query with placeholders
     const queryText = `
@@ -386,7 +439,7 @@ const getPersons = async (req, res) => {
           ORDER BY 
               CASE WHEN profile_path IS NULL THEN 1 ELSE 0 END,  -- Persons with images first
               ${orderClause}
-          LIMIT $1 OFFSET $2
+          LIMIT $1 OFFSET $2;
       `;
 
     const countText = `
@@ -394,7 +447,7 @@ const getPersons = async (req, res) => {
           FROM person_details
           WHERE 
               name ~ '^[A-Za-z0-9]'
-              AND popularity > 0.5
+              AND popularity > 0.5;
       `;
 
     // Execute queries in parallel
@@ -416,12 +469,18 @@ const getPersons = async (req, res) => {
     }));
 
     // Prepare response
-    res.json({
+    const response = {
       results: transformedResults,
       currentPage: page,
       totalPages,
       totalItems,
-    });
+    };
+
+    // Store the response in Redis with a 1-hour expiration
+    await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
+
+    console.log("Serving persons data from database");
+    res.json(response);
   } catch (err) {
     console.error("Error fetching person details:", err);
     res.status(500).json({
@@ -430,6 +489,8 @@ const getPersons = async (req, res) => {
     });
   }
 };
+
+
 
 // Route 9: GET /api/movies/:movie_id
 const getMovieInfo = async function (req, res) {
