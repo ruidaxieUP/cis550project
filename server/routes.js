@@ -1,7 +1,6 @@
 const { Pool, types } = require("pg");
 const config = require("./config.json");
 
-
 const picture_url = "https://image.tmdb.org/t/p/";
 const picture_size = "w500";
 const default_picture =
@@ -38,7 +37,7 @@ const topDirectors = async function (req, res) {
   try {
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log('Serving from Redis cache');
+      console.log("Serving from Redis cache");
       return res.json(JSON.parse(cachedData));
     }
 
@@ -59,7 +58,7 @@ const topDirectors = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log('Serving from database');
+    console.log("Serving from database");
     res.json(result);
   } catch (err) {
     console.error("Error fetching top directors:", err);
@@ -69,15 +68,15 @@ const topDirectors = async function (req, res) {
 
 // Route 2: GET /api/top-actors
 const topActors = async function (req, res) {
-  const redisClient = req.redisClient; 
-  const cacheKey = "top_actors"; 
+  const redisClient = req.redisClient;
+  const cacheKey = "top_actors";
 
   try {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
       console.log("Serving top actors from Redis cache");
-      return res.json(JSON.parse(cachedData)); 
+      return res.json(JSON.parse(cachedData));
     }
 
     const query = `
@@ -112,15 +111,15 @@ const topActors = async function (req, res) {
 
 // Route 3: GET /api/top-actresses
 const topActresses = async function (req, res) {
-  const redisClient = req.redisClient; 
-  const cacheKey = "top_actresses"; 
+  const redisClient = req.redisClient;
+  const cacheKey = "top_actresses";
 
   try {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
       console.log("Serving top actresses from Redis cache");
-      return res.json(JSON.parse(cachedData)); 
+      return res.json(JSON.parse(cachedData));
     }
 
     const query = `
@@ -155,15 +154,15 @@ const topActresses = async function (req, res) {
 
 // Route 4: GET /api/top-combos
 const topCombos = async function (req, res) {
-  const redisClient = req.redisClient; 
-  const cacheKey = "top_combos"; 
+  const redisClient = req.redisClient;
+  const cacheKey = "top_combos";
 
   try {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
       console.log("Serving top combos from Redis cache");
-      return res.json(JSON.parse(cachedData)); 
+      return res.json(JSON.parse(cachedData));
     }
 
     const query = `
@@ -223,7 +222,7 @@ const topCombos = async function (req, res) {
 
 // Route 5: Get /api/movies Bowen Xiang: Movie main page
 const getMovies = async function (req, res) {
-  const redisClient = req.redisClient; 
+  const redisClient = req.redisClient;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 16;
   const filter = req.query.filter || "popularity_desc";
@@ -318,12 +317,12 @@ const getMovies = async function (req, res) {
 // Route 6: GET /api/random
 const getRandom = async function (req, res) {
   const query = `
-    SELECT id,
-           backdrop_path
-    FROM movie_details
-    WHERE backdrop_path IS NOT NULL
-    ORDER BY RANDOM()
-    LIMIT 1;
+    SELECT id, backdrop_path
+FROM movie_details
+WHERE backdrop_path IS NOT NULL
+OFFSET FLOOR(RANDOM() * (SELECT COUNT(*) FROM movie_details WHERE backdrop_path IS NOT NULL))
+LIMIT 1;
+
   `;
 
   connection.query(query, (err, data) => {
@@ -383,7 +382,6 @@ const getRandom = async function (req, res) {
 //     res.status(500).json({ error: "Internal server error" });
 //   }
 // };
-
 
 // Route 8: GET /api/persons
 
@@ -526,7 +524,9 @@ const getMovieInfo = async function (req, res) {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving movie info for movie_id: ${movie_id} from Redis cache`);
+      console.log(
+        `Serving movie info for movie_id: ${movie_id} from Redis cache`
+      );
       return res.json(JSON.parse(cachedData)); // Serve cached data
     }
 
@@ -585,7 +585,9 @@ const getMovieCasts = async function (req, res) {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving movie casts for movie_id: ${movie_id} from Redis cache`);
+      console.log(
+        `Serving movie casts for movie_id: ${movie_id} from Redis cache`
+      );
       return res.json(JSON.parse(cachedData)); // Serve cached data
     }
 
@@ -629,7 +631,9 @@ const getMovieGenres = async function (req, res) {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving movie genres for movie_id: ${movie_id} from Redis cache`);
+      console.log(
+        `Serving movie genres for movie_id: ${movie_id} from Redis cache`
+      );
       return res.json(JSON.parse(cachedData)); // Serve cached data
     }
 
@@ -742,7 +746,9 @@ const getSimilarMovies = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving similar movies for movie_id: ${movie_id} from Redis cache`);
+      console.log(
+        `Serving similar movies for movie_id: ${movie_id} from Redis cache`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
@@ -773,10 +779,15 @@ const getSimilarMovies = async function (req, res) {
     // Cache the response
     await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
 
-    console.log(`Serving similar movies for movie_id: ${movie_id} from database`);
+    console.log(
+      `Serving similar movies for movie_id: ${movie_id} from database`
+    );
     res.json(response);
   } catch (err) {
-    console.error(`Error fetching similar movies for movie_id: ${movie_id}`, err);
+    console.error(
+      `Error fetching similar movies for movie_id: ${movie_id}`,
+      err
+    );
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -800,7 +811,9 @@ const getPersonInfo = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving person info for person_id: ${person_id} from Redis cache`);
+      console.log(
+        `Serving person info for person_id: ${person_id} from Redis cache`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
@@ -822,10 +835,15 @@ const getPersonInfo = async function (req, res) {
     // Cache the result
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 }); // Cache for 1 hour
 
-    console.log(`Serving person info for person_id: ${person_id} from database`);
+    console.log(
+      `Serving person info for person_id: ${person_id} from database`
+    );
     res.json(result);
   } catch (err) {
-    console.error(`Error fetching person info for person_id: ${person_id}`, err);
+    console.error(
+      `Error fetching person info for person_id: ${person_id}`,
+      err
+    );
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -863,7 +881,9 @@ const getPersonGenres = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving person genres for person_id: ${person_id} from Redis cache`);
+      console.log(
+        `Serving person genres for person_id: ${person_id} from Redis cache`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
@@ -879,10 +899,15 @@ const getPersonGenres = async function (req, res) {
     // Cache the result
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 }); // Cache for 1 hour
 
-    console.log(`Serving person genres for person_id: ${person_id} from database`);
+    console.log(
+      `Serving person genres for person_id: ${person_id} from database`
+    );
     res.json(result);
   } catch (err) {
-    console.error(`Error fetching person genres for person_id: ${person_id}`, err);
+    console.error(
+      `Error fetching person genres for person_id: ${person_id}`,
+      err
+    );
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -940,7 +965,9 @@ const getPersonKnownFor = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving person known for person_id: ${person_id} from Redis cache`);
+      console.log(
+        `Serving person known for person_id: ${person_id} from Redis cache`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
@@ -973,7 +1000,9 @@ const getPersonKnownFor = async function (req, res) {
     // Cache the response with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
 
-    console.log(`Serving person known for person_id: ${person_id} from database`);
+    console.log(
+      `Serving person known for person_id: ${person_id} from database`
+    );
     res.json(response);
   } catch (err) {
     console.error("Error fetching person known for:", err);
@@ -1024,7 +1053,9 @@ const getPersonCollaborators = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving collaborators for person_id: ${person_id} from Redis cache`);
+      console.log(
+        `Serving collaborators for person_id: ${person_id} from Redis cache`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
@@ -1040,7 +1071,9 @@ const getPersonCollaborators = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log(`Serving collaborators for person_id: ${person_id} from database`);
+    console.log(
+      `Serving collaborators for person_id: ${person_id} from database`
+    );
     res.json(result);
   } catch (err) {
     console.error("Error fetching person collaborators:", err);
@@ -1050,7 +1083,6 @@ const getPersonCollaborators = async function (req, res) {
     });
   }
 };
-
 
 // Route 16: GET /api/search-persons
 const searchPersons = async function (req, res) {
@@ -1076,7 +1108,9 @@ const searchPersons = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving search results for query: "${query}" from Redis cache`);
+      console.log(
+        `Serving search results for query: "${query}" from Redis cache`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
@@ -1104,10 +1138,11 @@ const searchPersons = async function (req, res) {
     res.json(response);
   } catch (err) {
     console.error("Error fetching search results:", err);
-    res.status(500).json({ error: "Internal server error", details: err.message });
+    res
+      .status(500)
+      .json({ error: "Internal server error", details: err.message });
   }
 };
-
 
 // Export the functions
 module.exports = {
