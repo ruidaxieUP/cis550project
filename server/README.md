@@ -69,7 +69,7 @@
 ### **Check Existing Data**
 1. List all keys in Redis:
    ```bash
-   redis-cli KEYS "*"
+   redis-cli KEYS *
    ```
 
 2. Get data for a specific key:
