@@ -4,29 +4,10 @@ import LiveSearch from "../components/LiveSearch";
 import ImageSlider from "../components/ImageSlider";
 import { PairImageSlider } from "../components/ImageSlider";
 import { fetchData } from "./utils";
+import { useNavigate } from "react-router-dom"; 
 
-{
-  /*Temporary search profiles*/
-}
-const profiles = [
-  { id: "1", name: "Allie Grater" },
-  { id: "2", name: "Aida Bugg" },
-  { id: "3", name: "Gabrielle" },
-  { id: "4", name: "Grace" },
-  { id: "5", name: "Hannah" },
-  { id: "6", name: "Heather" },
-  { id: "7", name: "John Doe" },
-  { id: "8", name: "Anne Teak" },
-  { id: "9", name: "Audie Yose" },
-  { id: "10", name: "Addie Minstra" },
-  { id: "11", name: "Anne Ortha" },
-];
 
 export default function HomePage() {
-  {
-    /*Temporary search result*/
-  }
-  const [results, setResults] = useState([]);
   const [selectedProfile, setSelectedProfile] = useState(null);
 
   const [directors, setDirectors] = useState([]);
@@ -34,7 +15,10 @@ export default function HomePage() {
   const [femaleActors, setFemaleActors] = useState([]);
   const [pairingsData, setPairingsData] = useState([]);
 
+  
   const [backgroundImage, setBackgroundImage] = useState("");
+
+  const navigate = useNavigate(); // Hook for navigation
 
   useEffect(() => {
     fetchData("top-directors", setDirectors);
@@ -50,7 +34,7 @@ export default function HomePage() {
       try {
         fetchData("random", (data) => {
           if (isMounted && data?.src) {
-            setBackgroundImage(data.src); 
+            setBackgroundImage(data.src);
           }
         });
       } catch (error) {
@@ -63,15 +47,14 @@ export default function HomePage() {
     };
   }, []);
 
-  const handleChange = (e) => {
-    const query = e.target.value.toLowerCase();
-    if (!query.trim()) return setResults([]);
-
-    const filteredResults = profiles.filter((profile) =>
-      profile.name.toLowerCase().startsWith(query)
-    );
-    setResults(filteredResults);
-  };
+    // Handle search button click
+    const handleSearch = () => {
+      if (selectedProfile && selectedProfile.id) {
+        navigate(`/persons/${selectedProfile.id}`);
+      } else {
+        alert("Please select a profile first.");
+      }
+    };
 
   return (
     <div className="main-container w-full bg-[#fff] relative overflow-hidden mx-auto my-0">
@@ -112,14 +95,14 @@ export default function HomePage() {
         {/* Search Section */}
         <div className="flex w-[704px] h-[40px] justify-between items-center relative z-[2] mt-8">
           <LiveSearch
-            results={results}
+            apiEndpoint="http://localhost:8080/api/search-persons"
             value={selectedProfile?.name}
-            renderItem={(item) => <p>{item.name}</p>}
-            onChange={handleChange}
+            onChange={() => setSelectedProfile(null)}
             onSelect={(item) => setSelectedProfile(item)}
           />
           {/* Button */}
-          <button className="flex h-[40px] w-[77px] ml-[12px] items-center justify-center bg-[#2c2c2c] rounded-[8px] border border-[#2c2c2c] shadow-md hover:bg-[#444] transition-all">
+          <button onClick = {handleSearch}
+          className="flex h-[40px] w-[77px] ml-[12px] items-center justify-center bg-[#2c2c2c] rounded-[8px] border border-[#2c2c2c] shadow-md hover:bg-[#444] transition-all">
             <span className="font-['Inter'] text-[16px] font-normal leading-[16px] text-[#f5f5f5]">
               Search
             </span>
