@@ -167,6 +167,7 @@ export default function MovieInfoPage() {
               title={movie.title}
               rating={parseFloat(movie.rating)}
               genres={movie.genres}
+              itemId={movie.id}
             />
           ))}
         </div>
