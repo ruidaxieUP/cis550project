@@ -16,12 +16,17 @@ export default function PeopleInfoPage() {
   const { person_id } = useParams();
 
   useEffect(() => {
-    setTimeout(() => {
+    const fetchPersonData = () => {
       fetchDataById("persons", person_id, setPersonData);
       fetchDataById("person-genres", person_id, setPersonGenres);
       fetchDataById("person-collaborators", person_id, setCollaborators);
-    }, 500);
-  });
+    };
+  
+    const timeoutId = setTimeout(fetchPersonData, 500);
+  
+    return () => clearTimeout(timeoutId);
+  }, [person_id]); 
+  
 
   useEffect(() => {
     fetchKnownForData(person_id, currentPage);
