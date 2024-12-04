@@ -37,7 +37,7 @@ export default function Card({ image, title, rating, itemId, type}) {
         />
 
         {/* Rating */}
-        <span className="font-['Inter'] text-[16px] text-[#1e1e1e]">
+        <span className=" text-[16px] text-[#1e1e1e]">
           {rating}
         </span>
       </div>

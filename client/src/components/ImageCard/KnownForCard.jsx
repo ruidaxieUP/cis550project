@@ -18,7 +18,7 @@ export default function Card({ posterPath, movieName, characterName, rating, mov
       <div className="flex flex-col gap-[8px]">
         <Link
           to={`/movies/${movieId}`}
-          className="text-[16px] font-['Inter'] font-normal leading-[22px] text-[#1e1e1e] hover:underline"
+          className="text-[16px]  font-normal leading-[22px] text-[#1e1e1e] hover:underline"
         >
           {movieName}
         </Link>
@@ -26,7 +26,7 @@ export default function Card({ posterPath, movieName, characterName, rating, mov
 
       {/* Subtitle Section */}
       <div className="flex">
-        <span className="text-[16px] font-['Inter'] font-semibold text-[#1e1e1e]">
+        <span className="text-[16px] font-semibold text-[#1e1e1e]">
           {characterName}
         </span>
       </div>
@@ -34,7 +34,7 @@ export default function Card({ posterPath, movieName, characterName, rating, mov
       {/* Rating Section */}
       <div className="flex items-center gap-[8px] mt-auto mb-[10px]">
         <FontAwesomeIcon icon={faStar} className="text-yellow-500 w-[16px] h-[16px]" />
-        <span className="text-[16px] font-['Inter'] text-[#757575]">{rating}</span>
+        <span className="text-[16px] text-[#757575]">{rating}</span>
       </div>
     </div>
   );

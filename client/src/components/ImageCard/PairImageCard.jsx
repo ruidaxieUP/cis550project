@@ -17,7 +17,7 @@ function PairImageCard({ directorImage, actorImage, directorName, actorName }) {
       {/* Director Name */}
       <div className="flex w-[162px] flex-col gap-[8px] items-start shrink-0 flex-nowrap relative z-[2]">
         <div className="flex w-[162px] items-start shrink-0 flex-nowrap relative z-[3]">
-          <span className="h-[22px] shrink-0 basis-auto font-['Inter'] text-[16px] font-semibold leading-[22px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[4]">
+          <span className="h-[22px] shrink-0 basis-auto text-[16px] font-semibold leading-[22px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[4]">
             {directorName}
           </span>
         </div>

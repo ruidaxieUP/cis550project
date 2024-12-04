@@ -81,7 +81,7 @@ export default function MovieInfoPage() {
         {/* Movie Info Section */}
         <div className="flex w-[518px] flex-col gap-[25px] items-start shrink-0 flex-nowrap">
           {/* Movie Title */}
-          <span className="h-[29px] self-stretch shrink-0 basis-auto font-['Inter'] text-[24px] font-semibold leading-[28.8px] text-[#1e1e1e] tracking-[-0.48px] relative text-left whitespace-nowrap">
+          <span className="h-[29px] self-stretch shrink-0 basis-auto text-[24px] font-semibold leading-[28.8px] text-[#1e1e1e] tracking-[-0.48px] relative text-left whitespace-nowrap">
             {`${movie_name} (${production_year})`}
           </span>
 
@@ -92,10 +92,10 @@ export default function MovieInfoPage() {
               className="text-yellow-500 w-8 h-8"
             />
             <div className="flex w-[100px] flex-col items-start shrink-0 flex-nowrap">
-              <span className="h-[21px] self-stretch shrink-0 basis-auto font-['Inter'] text-[20px] font-normal leading-[21px] text-[#757575] relative text-left whitespace-nowrap">
+              <span className="h-[21px] self-stretch shrink-0 basis-auto  text-[20px] font-normal leading-[21px] text-[#757575] relative text-left whitespace-nowrap">
                 {rating}
               </span>
-              <span className="h-[21px] self-stretch shrink-0 basis-auto font-['Inter'] text-[14px] font-normal leading-[19.6px] text-[#757575] relative text-left whitespace-nowrap">
+              <span className="h-[21px] self-stretch shrink-0 basis-auto text-[14px] font-normal leading-[19.6px] text-[#757575] relative text-left whitespace-nowrap">
                 {`${votes} voted`}
               </span>
             </div>
@@ -118,10 +118,10 @@ export default function MovieInfoPage() {
                 key={index}
                 className="flex justify-between items-center w-full h-[44px]"
               >
-                <span className="font-['Inter'] text-[16px] font-normal leading-[22.4px] text-[#1e1e1e] w-[110px] text-left">
+                <span className=" text-[16px] font-normal leading-[22.4px] text-[#1e1e1e] w-[110px] text-left">
                   {item.label}
                 </span>
-                <span className="font-['Inter'] text-[16px] font-normal leading-[22.4px] text-[#1e1e1e] w-[384px] text-left">
+                <span className="text-[16px] font-normal leading-[22.4px] text-[#1e1e1e] w-[384px] text-left">
                   {item.value}
                 </span>
               </div>
@@ -130,7 +130,7 @@ export default function MovieInfoPage() {
 
           {/* Overview Section */}
           <div className="flex flex-col gap-[25px] items-start self-stretch shrink-0 flex-nowrap">
-            <span className="flex w-[518px] justify-start items-start self-stretch shrink-0 font-['Inter'] text-[16px] font-normal leading-[22.4px] text-[#1e1e1e] relative text-left">
+            <span className="flex w-[518px] justify-start items-start self-stretch shrink-0 text-[16px] font-normal leading-[22.4px] text-[#1e1e1e] relative text-left">
               Overview: {overview}
             </span>
           </div>

@@ -60,10 +60,10 @@ export default function PeopleInfoPage() {
         />
         <div className="flex flex-col flex-1 gap-[24px] items-start">
           <div className="flex flex-col gap-[8px] items-start w-full">
-            <span className="font-['Inter'] text-[24px] font-semibold text-[#1e1e1e]">
+            <span className="text-[24px] font-semibold text-[#1e1e1e]">
               {personData.name}
             </span>
-            <span className="font-['Inter'] text-[20px] text-[#757575]">
+            <span className=" text-[20px] text-[#757575]">
               Known For {personData.knownForDepartment}
             </span>
           </div>

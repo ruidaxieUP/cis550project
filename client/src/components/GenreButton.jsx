@@ -30,7 +30,7 @@ function GenreButton({ genreId, genre }) {
       className="flex pt-[8px] pr-[8px] pb-[8px] pl-[8px] gap-[8px] justify-center items-center shrink-0 flex-nowrap rounded-[8px] border-none relative pointer"
       style={{ backgroundColor: bgColor }}
     >
-      <span className="h-[16px] shrink-0 basis-auto font-['Inter'] text-[16px] font-normal leading-[16px] text-[#f5f5f5] relative text-left whitespace-nowrap">
+      <span className="h-[16px] shrink-0 basis-auto text-[16px] font-normal leading-[16px] text-[#f5f5f5] relative text-left whitespace-nowrap">
         {genre}
       </span>
     </button>

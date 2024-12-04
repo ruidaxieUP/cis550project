@@ -5,14 +5,14 @@ const CastImageCard = ({ image, characterName, actorName, actorId }) => {
   return (
     <div className="main-container w-[182px] h-[235.401px] text-[0px] relative mx-auto my-0">
       {/* Character Name */}
-      <span className="flex w-[176.551px] h-[23.976px] justify-center items-center font-['Inter'] text-[16px] font-semibold leading-[22.4px] text-[#000] relative text-center whitespace-nowrap mt-[193px] mr-0 mb-0 ml-0 z-[2]">
+      <span className="flex w-[176.551px] h-[23.976px] justify-center items-center text-[16px] font-semibold leading-[22.4px] text-[#000] relative text-center whitespace-nowrap mt-[193px] mr-0 mb-0 ml-0 z-[2]">
         {characterName}
       </span>
 
       {/* Actor Name as Link */}
       <Link
         to={`/persons/${actorId}`}
-        className="flex w-[176.551px] h-[23.976px] justify-center items-center font-['Inter'] text-[16px] font-normal leading-[22.4px] text-[#000] relative text-center whitespace-nowrap z-[2] mt-[-5.551px] mr-0 mb-0 ml-0 hover:underline"
+        className="flex w-[176.551px] h-[23.976px] justify-center items-center text-[16px] font-normal leading-[22.4px] text-[#000] relative text-center whitespace-nowrap z-[2] mt-[-5.551px] mr-0 mb-0 ml-0 hover:underline"
       >
         {actorName}
       </Link>

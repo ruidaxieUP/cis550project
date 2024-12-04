@@ -51,8 +51,8 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
             <span
               className={
                 page === currentPage
-                  ? "h-[16px] shrink-0 basis-auto font-['Inter'] text-[16px] font-normal leading-[16px] text-[#f5f5f5] relative text-left whitespace-nowrap z-[1]"
-                  : "h-[16px] shrink-0 basis-auto font-['Inter'] text-[16px] font-normal leading-[16px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[3]"
+                  ? "h-[16px] shrink-0 basis-auto text-[16px] font-normal leading-[16px] text-[#f5f5f5] relative text-left whitespace-nowrap z-[1]"
+                  : "h-[16px] shrink-0 basis-auto text-[16px] font-normal leading-[16px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[3]"
               }
             >
               {page}
@@ -61,7 +61,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
         ) : (
           <span
             key={index}
-            className="h-[16px] shrink-0 basis-auto font-['Inter'] text-[16px] font-normal leading-[16px] text-[#757575] relative text-left whitespace-nowrap z-[3] pointer-events-none"
+            className="h-[16px] shrink-0 basis-auto text-[16px] font-normal leading-[16px] text-[#757575] relative text-left whitespace-nowrap z-[3] pointer-events-none"
           >
             {page}
           </span>

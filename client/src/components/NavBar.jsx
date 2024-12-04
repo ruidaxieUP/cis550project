@@ -24,7 +24,7 @@ function NavItem({ name, path, isActive }) {
       to={path}
       className={isActive ? activeStyle : inactiveStyle}
     >
-      <span className="h-[16px] shrink-0 basis-auto font-['Inter'] text-[16px] font-normal leading-[16px] text-[#1e1e1e] relative text-left whitespace-nowrap">
+      <span className="h-[16px] shrink-0 basis-auto text-[16px] font-normal leading-[16px] text-[#1e1e1e] relative text-left whitespace-nowrap">
         {name}
       </span>
     </NavLink>

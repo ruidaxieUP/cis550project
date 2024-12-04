@@ -26,7 +26,7 @@ export default function RectangleImageCard({ image, title, rating, genres, itemI
       {/* Rating with Star Icon */}
       <div className="flex gap-[8px] items-center mt-2">
         <FontAwesomeIcon icon={faStar} className="text-yellow-500 w-[16px] h-[16px]" />
-        <span className="font-['Inter'] text-[16px] text-[#757575]">{rating}</span>
+        <span className=" text-[16px] text-[#757575]">{rating}</span>
       </div>
 
       {/* Genres */}

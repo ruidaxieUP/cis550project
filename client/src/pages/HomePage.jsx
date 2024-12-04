@@ -84,10 +84,10 @@ export default function HomePage() {
 
         {/* Content */}
         <div className="flex flex-col items-center justify-center mb-8 text-center relative z-[2]">
-          <span className="font-['Inter'] text-[72px] font-bold leading-[86px] text-[#0c0c0d] tracking-[-2.16px] whitespace-nowrap">
+          <span className=" text-[72px] font-bold leading-[86px] text-[#0c0c0d] tracking-[-2.16px] whitespace-nowrap">
             Movie People DB
           </span>
-          <span className="font-['Inter'] text-[32px] font-normal leading-[38px] text-[#0c0c0d]">
+          <span className=" text-[32px] font-normal leading-[38px] text-[#0c0c0d]">
             Exploring the individuals who bring stories to life.
           </span>
         </div>
@@ -103,7 +103,7 @@ export default function HomePage() {
           {/* Button */}
           <button onClick = {handleSearch}
           className="flex h-[40px] w-[77px] ml-[12px] items-center justify-center bg-[#2c2c2c] rounded-[8px] border border-[#2c2c2c] shadow-md hover:bg-[#444] transition-all">
-            <span className="font-['Inter'] text-[16px] font-normal leading-[16px] text-[#f5f5f5]">
+            <span className=" text-[16px] font-normal leading-[16px] text-[#f5f5f5]">
               Search
             </span>
           </button>

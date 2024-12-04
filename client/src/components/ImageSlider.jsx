@@ -10,7 +10,7 @@ function ImageSlider({ title, data, sliderSettings }) {
     <div className="flex flex-col items-center w-full">
       {/* Title Section */}
       <div className="w-full mb-6">
-        <span className="w-full font-['Inter'] text-[24px] font-semibold leading-[29px] text-[#000] tracking-[-0.48px] text-left">
+        <span className="w-full text-[24px] font-semibold leading-[29px] text-[#000] tracking-[-0.48px] text-left">
           {title}
         </span>
       </div>
@@ -61,7 +61,7 @@ function PairImageSlider({ title, data }) {
     <div className="flex flex-col items-center w-full">
       {/* Title Section */}
       <div className="w-full mb-6">
-        <span className="w-full font-['Inter'] text-[24px] font-semibold leading-[29px] text-[#000] tracking-[-0.48px] text-left">
+        <span className="w-full text-[24px] font-semibold leading-[29px] text-[#000] tracking-[-0.48px] text-left">
           {title}
         </span>
       </div>
