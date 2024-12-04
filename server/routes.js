@@ -109,29 +109,48 @@ const topActors = async function (req, res) {
 
 // Route 3: GET /api/top-actresses
 const topActresses = async function (req, res) {
-  query = `
-    SELECT name, profile_path
-    from person_details
-    WHERE gender = '1'
-    AND profile_path is not null
-    AND known_for_department LIKE 'Act%'
-    ORDER BY popularity DESC
-    LIMIT 10;
-  `;
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.log(err);
-      res.json({});
-    } else {
-      res.json(
-        data.rows.map((row) => ({
-          src: make_picture_url(picture_size, row.profile_path),
-          title: row.name,
-        }))
-      );
+  const cacheKey = "top_actresses"; // Define a unique cache key for actresses
+
+  try {
+    // Check if the data is cached
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log("Serving top actresses from Redis cache");
+      return res.json(JSON.parse(cachedData)); // Serve cached data
     }
-  });
+
+    // Query the database if no cache exists
+    const query = `
+      SELECT name, profile_path
+      FROM person_details
+      WHERE gender = '1'
+      AND profile_path IS NOT NULL
+      AND known_for_department LIKE 'Act%'
+      ORDER BY popularity DESC
+      LIMIT 10;
+    `;
+    const data = await connection.query(query);
+    
+    // Process the result
+    const result = data.rows.map((row) => ({
+      src: make_picture_url(picture_size, row.profile_path),
+      title: row.name,
+    }));
+
+    // Store the result in Redis with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+
+    console.log("Serving top actresses from database");
+    res.json(result);
+  } catch (err) {
+    console.error("Error fetching top actresses:", err);
+    res.status(500).json({
+      error: "Internal server error",
+      details: err.message,
+    });
+  }
 };
+
 
 // Route 4: GET /api/top-combos
 const topCombos = async function (req, res) {
