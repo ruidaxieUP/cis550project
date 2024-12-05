@@ -29,7 +29,7 @@ export default function MoivePage() {
     let isMounted = true;
     const fetchBackgroundImage = async () => {
       try {
-        fetchData("random", (data) => {
+        fetchData("random?screen=moviespage", (data) => {
           if (isMounted && data?.src) {
             setBackgroundImage(data.src);
           }

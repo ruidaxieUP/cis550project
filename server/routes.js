@@ -315,75 +315,76 @@ const getMovies = async function (req, res) {
 };
 
 // Route 6: GET /api/random
-const getRandom = async function (req, res) {
-  const query = `
-    SELECT id, backdrop_path
-FROM movie_details
-WHERE backdrop_path IS NOT NULL
-OFFSET FLOOR(RANDOM() * (SELECT COUNT(*) FROM movie_details WHERE backdrop_path IS NOT NULL))
-LIMIT 1;
-
-  `;
-
-  connection.query(query, (err, data) => {
-    if (err) {
-      console.error("Error executing query:", err);
-      res.status(500).json({ error: "Internal server error" });
-    } else if (data.rows.length === 0) {
-      res.status(404).json({ error: "No picture found" });
-    } else {
-      const row = data.rows[0];
-      res.json({
-        src: make_picture_url(picture_size, row.backdrop_path),
-      });
-    }
-  });
-};
-
-// redis version of Route 7: getRandom
 // const getRandom = async function (req, res) {
-//   const cacheKey = "random_picture"; // Define a cache key for the random picture
+//   const query = `
+//     SELECT id, backdrop_path
+// FROM movie_details
+// WHERE backdrop_path IS NOT NULL
+// OFFSET FLOOR(RANDOM() * (SELECT COUNT(*) FROM movie_details WHERE backdrop_path IS NOT NULL))
+// LIMIT 1;
 
-//   try {
-//     // Check if the data is cached in Redis
-//     const cachedData = await redisClient.get(cacheKey);
-//     if (cachedData) {
-//       console.log("Serving random picture from Redis cache");
-//       return res.json(JSON.parse(cachedData)); // Serve cached data
+//   `;
+
+//   connection.query(query, (err, data) => {
+//     if (err) {
+//       console.error("Error executing query:", err);
+//       res.status(500).json({ error: "Internal server error" });
+//     } else if (data.rows.length === 0) {
+//       res.status(404).json({ error: "No picture found" });
+//     } else {
+//       const row = data.rows[0];
+//       res.json({
+//         src: make_picture_url(picture_size, row.backdrop_path),
+//       });
 //     }
-
-//     // Query the database if no cache exists
-//     const query = `
-//       SELECT id,
-//              backdrop_path
-//       FROM movie_details
-//       WHERE backdrop_path IS NOT NULL
-//       ORDER BY RANDOM()
-//       LIMIT 1;
-//     `;
-
-//     const data = await connection.query(query);
-//     if (data.rows.length === 0) {
-//       return res.status(404).json({ error: "No picture found" });
-//     }
-
-//     const row = data.rows[0];
-//     const result = {
-//       src: make_picture_url(picture_size, row.backdrop_path),
-//     };
-
-//     // Store the result in Redis with an expiry of 1 hour
-//     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
-//     console.log("Serving random picture from database");
-//     res.json(result);
-//   } catch (err) {
-//     console.error("Error fetching random picture:", err);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
+//   });
 // };
 
-// Route 8: GET /api/persons
+
+
+// Route 7: GET /api/persons
+
+const getRandom = async function (req, res) {
+  const redisClient = req.redisClient; 
+  const screen = req.query.screen || "default"; 
+  const cacheKey = `random_picture_${screen}`;
+
+  try {
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      console.log(`Serving random picture for ${screen} from Redis cache`);
+      return res.json(JSON.parse(cachedData)); 
+    }
+
+    const query = `
+      SELECT id,
+             backdrop_path
+      FROM movie_details
+      WHERE backdrop_path IS NOT NULL
+      ORDER BY RANDOM()
+      LIMIT 1;
+    `;
+    const data = await connection.query(query);
+    if (data.rows.length === 0) {
+      return res.status(404).json({ error: "No picture found" });
+    }
+
+    const row = data.rows[0];
+    const result = {
+      src: make_picture_url(picture_size, row.backdrop_path),
+    };
+
+    // Store the result in Redis with an expiry of 1 hour
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+
+    console.log(`Serving random picture for ${screen} from database`);
+    res.json(result);
+  } catch (err) {
+    console.error("Error fetching random picture:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 
 // Route 7: GET /api/persons
 const getPersons = async (req, res) => {
