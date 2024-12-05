@@ -33,11 +33,14 @@ function make_picture_url(size, fname) {
 const topDirectors = async function (req, res) {
   const redisClient = req.redisClient; // Use Redis client from req
   const cacheKey = "top_directors";
+  const start = process.hrtime(); // Start timer
 
   try {
+    // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log("Serving from Redis cache");
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[CACHE] Serving top directors from Redis cache, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.json(JSON.parse(cachedData));
     }
 
@@ -58,27 +61,39 @@ const topDirectors = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log("Serving from database");
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(`[DATABASE] Serving top directors from database, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+
     res.json(result);
   } catch (err) {
-    console.error("Error fetching top directors:", err);
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.error(`[ERROR] Error fetching top directors, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+    console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
+
 // Route 2: GET /api/top-actors
 const topActors = async function (req, res) {
-  const redisClient = req.redisClient;
+  const redisClient = req.redisClient; // Use Redis client
   const cacheKey = "top_actors";
+  const start = process.hrtime(); // Start timer
 
   try {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log("Serving top actors from Redis cache");
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(
+        `[CACHE] Serving top actors from Redis cache, Time: ${
+          elapsed[0] * 1000 + elapsed[1] / 1e6
+        } ms`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
+    // Query database
     const query = `
       SELECT name, profile_path
       FROM person_details
@@ -90,6 +105,7 @@ const topActors = async function (req, res) {
     `;
     const data = await connection.query(query);
 
+    // Process query results
     const result = data.rows.map((row) => ({
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
@@ -98,10 +114,22 @@ const topActors = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log("Serving top actors from database");
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(
+      `[DATABASE] Serving top actors from database, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+
     res.json(result);
   } catch (err) {
-    console.error("Error fetching top actors:", err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(
+      `[ERROR] Error fetching top actors, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -111,17 +139,24 @@ const topActors = async function (req, res) {
 
 // Route 3: GET /api/top-actresses
 const topActresses = async function (req, res) {
-  const redisClient = req.redisClient;
+  const redisClient = req.redisClient; // Use Redis client
   const cacheKey = "top_actresses";
+  const start = process.hrtime(); // Start timer
 
   try {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log("Serving top actresses from Redis cache");
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(
+        `[CACHE] Serving top actresses from Redis cache, Time: ${
+          elapsed[0] * 1000 + elapsed[1] / 1e6
+        } ms`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
+    // Query database
     const query = `
       SELECT name, profile_path
       FROM person_details
@@ -133,6 +168,7 @@ const topActresses = async function (req, res) {
     `;
     const data = await connection.query(query);
 
+    // Process query results
     const result = data.rows.map((row) => ({
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
@@ -141,10 +177,22 @@ const topActresses = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log("Serving top actresses from database");
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(
+      `[DATABASE] Serving top actresses from database, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+
     res.json(result);
   } catch (err) {
-    console.error("Error fetching top actresses:", err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(
+      `[ERROR] Error fetching top actresses, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -154,17 +202,24 @@ const topActresses = async function (req, res) {
 
 // Route 4: GET /api/top-combos
 const topCombos = async function (req, res) {
-  const redisClient = req.redisClient;
+  const redisClient = req.redisClient; // Use Redis client
   const cacheKey = "top_combos";
+  const start = process.hrtime(); // Start timer
 
   try {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log("Serving top combos from Redis cache");
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(
+        `[CACHE] Serving top combos from Redis cache, Time: ${
+          elapsed[0] * 1000 + elapsed[1] / 1e6
+        } ms`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
+    // Query database
     const query = `
       WITH cast_director AS (
           SELECT 
@@ -199,6 +254,7 @@ const topCombos = async function (req, res) {
     `;
     const data = await connection.query(query);
 
+    // Process query results
     const result = data.rows.map((row) => ({
       actorName: row.actor_name,
       actorImage: make_picture_url(picture_size, row.actor_image),
@@ -209,10 +265,22 @@ const topCombos = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log("Serving top combos from database");
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(
+      `[DATABASE] Serving top combos from database, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+
     res.json(result);
   } catch (err) {
-    console.error("Error fetching top combos:", err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(
+      `[ERROR] Error fetching top combos, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -222,7 +290,7 @@ const topCombos = async function (req, res) {
 
 // Route 5: Get /api/movies Bowen Xiang: Movie main page
 const getMovies = async function (req, res) {
-  const redisClient = req.redisClient;
+  const redisClient = req.redisClient; // Use Redis client
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 16;
   const filter = req.query.filter || "popularity_desc";
@@ -241,12 +309,18 @@ const getMovies = async function (req, res) {
 
   const offset = (page - 1) * pageSize;
   const cacheKey = `movies_page_${page}_pageSize_${pageSize}_filter_${filter}`;
+  const start = process.hrtime(); // Start timer
 
   try {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log("Serving /movies data from Redis cache");
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(
+        `[CACHE] Serving /movies data from Redis cache, Time: ${
+          elapsed[0] * 1000 + elapsed[1] / 1e6
+        } ms`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
@@ -303,10 +377,22 @@ const getMovies = async function (req, res) {
     // Cache response
     await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
 
-    console.log("Serving /movies data from database");
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(
+      `[DATABASE] Serving /movies data from database, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+
     res.json(response);
   } catch (err) {
-    console.error("Error in /movies endpoint:", err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(
+      `[ERROR] Error in /movies endpoint, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -340,22 +426,28 @@ const getMovies = async function (req, res) {
 //   });
 // };
 
-
-
 // Route 7: GET /api/persons
 
 const getRandom = async function (req, res) {
-  const redisClient = req.redisClient; 
-  const screen = req.query.screen || "default"; 
+  const redisClient = req.redisClient;
+  const screen = req.query.screen || "default";
   const cacheKey = `random_picture_${screen}`;
+  const start = process.hrtime(); // Start timer
 
   try {
+    // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(`Serving random picture for ${screen} from Redis cache`);
-      return res.json(JSON.parse(cachedData)); 
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(
+        `[CACHE] Serving random picture for ${screen} from Redis cache, Time: ${
+          elapsed[0] * 1000 + elapsed[1] / 1e6
+        } ms`
+      );
+      return res.json(JSON.parse(cachedData));
     }
 
+    // Query database
     const query = `
       SELECT id,
              backdrop_path
@@ -377,18 +469,29 @@ const getRandom = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log(`Serving random picture for ${screen} from database`);
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(
+      `[DATABASE] Serving random picture for ${screen} from database, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+
     res.json(result);
   } catch (err) {
-    console.error("Error fetching random picture:", err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(
+      `[ERROR] Error fetching random picture for ${screen}, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+    console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
 
-
 // Route 7: GET /api/persons
 const getPersons = async (req, res) => {
-  const redisClient = req.redisClient; // Fetch redis client from the request object
+  const redisClient = req.redisClient; // Fetch Redis client from the request object
   const page = Math.max(parseInt(req.query.page) || 1, 1); // Ensure page >= 1
   const pageSize = Math.max(parseInt(req.query.pageSize) || 16, 1); // Ensure pageSize >= 1
   const filter = req.query.filter || "popularity_desc";
@@ -407,12 +510,18 @@ const getPersons = async (req, res) => {
 
   const offset = (page - 1) * pageSize;
   const cacheKey = `persons_page_${page}_pageSize_${pageSize}_filter_${filter}`; // Unique cache key
+  const start = process.hrtime(); // Start timer
 
   try {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log("Serving persons data from Redis cache");
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(
+        `[CACHE] Serving persons data from Redis cache, Time: ${
+          elapsed[0] * 1000 + elapsed[1] / 1e6
+        } ms`
+      );
       return res.json(JSON.parse(cachedData));
     }
 
@@ -470,10 +579,22 @@ const getPersons = async (req, res) => {
     // Store the response in Redis with a 1-hour expiration
     await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
 
-    console.log("Serving persons data from database");
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(
+      `[DATABASE] Serving persons data from database, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+
     res.json(response);
   } catch (err) {
-    console.error("Error fetching person details:", err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(
+      `[ERROR] Error fetching person details, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -486,6 +607,7 @@ const getMovieInfo = async function (req, res) {
   const redisClient = req.redisClient; // Get the Redis client from the request
   const movie_id = req.params.movie_id;
   const cacheKey = `movie_info_${movie_id}`; // Define a unique cache key for this movie ID
+  const start = process.hrtime(); // Start timer
 
   const query = `
     WITH top_5_cast AS (
@@ -525,8 +647,11 @@ const getMovieInfo = async function (req, res) {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
+      const elapsed = process.hrtime(start); // Measure elapsed time
       console.log(
-        `Serving movie info for movie_id: ${movie_id} from Redis cache`
+        `[CACHE] Serving movie info for movie_id: ${movie_id} from Redis cache, Time: ${
+          elapsed[0] * 1000 + elapsed[1] / 1e6
+        } ms`
       );
       return res.json(JSON.parse(cachedData)); // Serve cached data
     }
@@ -535,6 +660,12 @@ const getMovieInfo = async function (req, res) {
     const data = await connection.query(query);
 
     if (data.rows.length === 0) {
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(
+        `[NOT FOUND] Movie info for movie_id: ${movie_id} not found, Time: ${
+          elapsed[0] * 1000 + elapsed[1] / 1e6
+        } ms`
+      );
       return res.status(404).json({ error: "Movie not found" });
     }
 
@@ -558,10 +689,22 @@ const getMovieInfo = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log(`Serving movie info for movie_id: ${movie_id} from database`);
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(
+      `[DATABASE] Serving movie info for movie_id: ${movie_id} from database, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+
     res.json(result);
   } catch (err) {
-    console.error(`Error fetching movie info for movie_id: ${movie_id}`, err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(
+      `[ERROR] Error fetching movie info for movie_id: ${movie_id}, Time: ${
+        elapsed[0] * 1000 + elapsed[1] / 1e6
+      } ms`
+    );
+    console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -571,6 +714,7 @@ const getMovieCasts = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const movie_id = req.params.movie_id;
   const cacheKey = `movie_casts_${movie_id}`; // Define a unique cache key for this movie ID
+  const start = process.hrtime(); // Start timer
 
   const query = `
     SELECT person_id, profile_path, character, name
@@ -586,9 +730,8 @@ const getMovieCasts = async function (req, res) {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving movie casts for movie_id: ${movie_id} from Redis cache`
-      );
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[CACHE] Serving movie casts for movie_id: ${movie_id} from Redis cache, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.json(JSON.parse(cachedData)); // Serve cached data
     }
 
@@ -606,19 +749,25 @@ const getMovieCasts = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log(`Serving movie casts for movie_id: ${movie_id} from database`);
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(`[DATABASE] Serving movie casts for movie_id: ${movie_id} from database, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+
     res.json(result);
   } catch (err) {
-    console.error(`Error fetching movie casts for movie_id: ${movie_id}`, err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(`[ERROR] Error fetching movie casts for movie_id: ${movie_id}, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+    console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 // Route 10: GET /api/movie-genres/:movie_id
 const getMovieGenres = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const movie_id = req.params.movie_id;
   const cacheKey = `movie_genres_${movie_id}`; // Define a unique cache key for this movie ID
+  const start = process.hrtime(); // Start timer
 
   const query = `
     SELECT DISTINCT genres.id, genres.name
@@ -632,9 +781,8 @@ const getMovieGenres = async function (req, res) {
     // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving movie genres for movie_id: ${movie_id} from Redis cache`
-      );
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[CACHE] Serving movie genres for movie_id: ${movie_id} from Redis cache, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.json(JSON.parse(cachedData)); // Serve cached data
     }
 
@@ -650,13 +798,18 @@ const getMovieGenres = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log(`Serving movie genres for movie_id: ${movie_id} from database`);
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(`[DATABASE] Serving movie genres for movie_id: ${movie_id} from database, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+
     res.json(result);
   } catch (err) {
-    console.error(`Error fetching movie genres for movie_id: ${movie_id}`, err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(`[ERROR] Error fetching movie genres for movie_id: ${movie_id}, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+    console.error(err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 // Route 11: GET /api/similar-movies/:movie_id
 const getSimilarMovies = async function (req, res) {
@@ -667,6 +820,7 @@ const getSimilarMovies = async function (req, res) {
   const offset = (page - 1) * pageSize;
 
   const cacheKey = `similar_movies_${movie_id}_page_${page}_pageSize_${pageSize}`; // Unique cache key
+  const start = process.hrtime(); // Start timer
 
   const query = `
     WITH this_movie_genres AS (
@@ -747,9 +901,8 @@ const getSimilarMovies = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving similar movies for movie_id: ${movie_id} from Redis cache`
-      );
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[CACHE] Serving similar movies for movie_id: ${movie_id} from Redis cache, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.json(JSON.parse(cachedData));
     }
 
@@ -780,15 +933,14 @@ const getSimilarMovies = async function (req, res) {
     // Cache the response
     await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
 
-    console.log(
-      `Serving similar movies for movie_id: ${movie_id} from database`
-    );
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(`[DATABASE] Serving similar movies for movie_id: ${movie_id} from database, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+
     res.json(response);
   } catch (err) {
-    console.error(
-      `Error fetching similar movies for movie_id: ${movie_id}`,
-      err
-    );
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(`[ERROR] Error fetching similar movies for movie_id: ${movie_id}, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -796,11 +948,13 @@ const getSimilarMovies = async function (req, res) {
   }
 };
 
+
 // Route 12: GET /api/persons/:person_id
 const getPersonInfo = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const person_id = req.params.person_id;
   const cacheKey = `person_info_${person_id}`; // Unique cache key for the person
+  const start = process.hrtime(); // Start timer
 
   const query = `
     SELECT id, name, profile_path, biography, known_for_department
@@ -812,15 +966,16 @@ const getPersonInfo = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving person info for person_id: ${person_id} from Redis cache`
-      );
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[CACHE] Serving person info for person_id: ${person_id} from Redis cache, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.json(JSON.parse(cachedData));
     }
 
     // Query the database if no cached data exists
     const data = await connection.query(query);
     if (data.rows.length === 0) {
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[NOT FOUND] Person info for person_id: ${person_id} not found, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.status(404).json({ error: "Person not found" });
     }
 
@@ -836,15 +991,14 @@ const getPersonInfo = async function (req, res) {
     // Cache the result
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 }); // Cache for 1 hour
 
-    console.log(
-      `Serving person info for person_id: ${person_id} from database`
-    );
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(`[DATABASE] Serving person info for person_id: ${person_id} from database, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+
     res.json(result);
   } catch (err) {
-    console.error(
-      `Error fetching person info for person_id: ${person_id}`,
-      err
-    );
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(`[ERROR] Error fetching person info for person_id: ${person_id}, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -852,11 +1006,13 @@ const getPersonInfo = async function (req, res) {
   }
 };
 
+
 // Route 13: GET /api/person-genres/:movie_id
 const getPersonGenres = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const person_id = req.params.person_id;
   const cacheKey = `person_genres_${person_id}`; // Unique cache key for the person's genres
+  const start = process.hrtime(); // Start timer
 
   const query = `
     WITH cast_crew AS (
@@ -882,9 +1038,8 @@ const getPersonGenres = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving person genres for person_id: ${person_id} from Redis cache`
-      );
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[CACHE] Serving person genres for person_id: ${person_id} from Redis cache, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.json(JSON.parse(cachedData));
     }
 
@@ -900,21 +1055,21 @@ const getPersonGenres = async function (req, res) {
     // Cache the result
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 }); // Cache for 1 hour
 
-    console.log(
-      `Serving person genres for person_id: ${person_id} from database`
-    );
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(`[DATABASE] Serving person genres for person_id: ${person_id} from database, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+
     res.json(result);
   } catch (err) {
-    console.error(
-      `Error fetching person genres for person_id: ${person_id}`,
-      err
-    );
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(`[ERROR] Error fetching person genres for person_id: ${person_id}, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
     });
   }
 };
+
 
 // Route 14: GET /api/person-known-for/:person_id
 const getPersonKnownFor = async function (req, res) {
@@ -924,6 +1079,7 @@ const getPersonKnownFor = async function (req, res) {
   const pageSize = parseInt(req.query.pageSize) || 8; // Default to 8 items per page
   const offset = (page - 1) * pageSize;
   const cacheKey = `person_known_for_${person_id}_page_${page}_pageSize_${pageSize}`; // Unique cache key
+  const start = process.hrtime(); // Start timer
 
   const query = `
     WITH cast_crew AS (
@@ -966,9 +1122,8 @@ const getPersonKnownFor = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving person known for person_id: ${person_id} from Redis cache`
-      );
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[CACHE] Serving person known for person_id: ${person_id} from Redis cache, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.json(JSON.parse(cachedData));
     }
 
@@ -1001,12 +1156,14 @@ const getPersonKnownFor = async function (req, res) {
     // Cache the response with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
 
-    console.log(
-      `Serving person known for person_id: ${person_id} from database`
-    );
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(`[DATABASE] Serving person known for person_id: ${person_id} from database, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+
     res.json(response);
   } catch (err) {
-    console.error("Error fetching person known for:", err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(`[ERROR] Error fetching person known for person_id: ${person_id}, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -1014,11 +1171,13 @@ const getPersonKnownFor = async function (req, res) {
   }
 };
 
+
 // Route 15: GET /api/person-collaborators/:person_id
 const getPersonCollaborators = async function (req, res) {
   const redisClient = req.redisClient; // Get Redis client from the request
   const person_id = req.params.person_id;
   const cacheKey = `person_collaborators_${person_id}`; // Unique cache key for collaborators
+  const start = process.hrtime(); // Start timer
 
   const query = `
     WITH cast_crew AS (
@@ -1054,9 +1213,8 @@ const getPersonCollaborators = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving collaborators for person_id: ${person_id} from Redis cache`
-      );
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[CACHE] Serving collaborators for person_id: ${person_id} from Redis cache, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.json(JSON.parse(cachedData));
     }
 
@@ -1072,12 +1230,14 @@ const getPersonCollaborators = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log(
-      `Serving collaborators for person_id: ${person_id} from database`
-    );
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(`[DATABASE] Serving collaborators for person_id: ${person_id} from database, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+
     res.json(result);
   } catch (err) {
-    console.error("Error fetching person collaborators:", err);
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(`[ERROR] Error fetching collaborators for person_id: ${person_id}, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+    console.error(err);
     res.status(500).json({
       error: "Internal server error",
       details: err.message,
@@ -1096,6 +1256,7 @@ const searchPersons = async function (req, res) {
 
   const offset = (page - 1) * pageSize;
   const cacheKey = `search_persons_${query.toLowerCase()}_page_${page}_pageSize_${pageSize}`; // Unique cache key for search query
+  const start = process.hrtime(); // Start timer
 
   const sqlQuery = `
     SELECT id, profile_path, known_for_department, name
@@ -1109,9 +1270,8 @@ const searchPersons = async function (req, res) {
     // Check if data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving search results for query: "${query}" from Redis cache`
-      );
+      const elapsed = process.hrtime(start); // Measure elapsed time
+      console.log(`[CACHE] Serving search results for query: "${query}" from Redis cache, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
       return res.json(JSON.parse(cachedData));
     }
 
@@ -1135,15 +1295,18 @@ const searchPersons = async function (req, res) {
     // Store the result in Redis with an expiry of 1 hour
     await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
 
-    console.log(`Serving search results for query: "${query}" from database`);
+    const elapsed = process.hrtime(start); // Measure elapsed time
+    console.log(`[DATABASE] Serving search results for query: "${query}" from database, Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+
     res.json(response);
   } catch (err) {
-    console.error("Error fetching search results:", err);
-    res
-      .status(500)
-      .json({ error: "Internal server error", details: err.message });
+    const elapsed = process.hrtime(start); // Measure elapsed time in case of error
+    console.error(`[ERROR] Error fetching search results for query: "${query}", Time: ${elapsed[0] * 1000 + elapsed[1] / 1e6} ms`);
+    console.error(err);
+    res.status(500).json({ error: "Internal server error", details: err.message });
   }
 };
+
 
 // Export the functions
 module.exports = {
