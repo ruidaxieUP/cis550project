@@ -3,17 +3,25 @@ import GenresContainer from "../GenresContainer";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
+import { useLazyLoad } from "../useLazyLoad"; 
 
 export default function RectangleImageCard({ image, title, rating, genres, itemId }) {
+  const { imgRef, isVisible } = useLazyLoad();
+
   return (
     <div className="flex flex-col w-[240px] p-[16px] bg-[#fff] rounded-[8px] border border-[#d9d9d9]">
-      {/* Image */}
+      {/* Image Section */}
       <div
-        className="w-full h-[247px] bg-cover bg-center mb-4"
+        ref={imgRef}
+        className="w-full h-[247px] bg-gray-300 rounded-md mb-4"
         style={{
-          backgroundImage: `url(${image})`,
+          backgroundImage: isVisible ? `url(${image})` : "none",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
-      ></div>
+      >
+        {!isVisible && <div className="w-full h-full bg-gray-300" />} {/* Placeholder */}
+      </div>
 
       {/* Title */}
       <Link
@@ -26,7 +34,7 @@ export default function RectangleImageCard({ image, title, rating, genres, itemI
       {/* Rating with Star Icon */}
       <div className="flex gap-[8px] items-center mt-2">
         <FontAwesomeIcon icon={faStar} className="text-yellow-500 w-[16px] h-[16px]" />
-        <span className=" text-[16px] text-[#757575]">{rating}</span>
+        <span className="text-[16px] text-[#757575]">{rating}</span>
       </div>
 
       {/* Genres */}

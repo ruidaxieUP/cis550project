@@ -4,15 +4,20 @@ const mysql = require('mysql2');
 const cors = require('cors');
 const config = require('./config');
 const routes = require('./routes');
-
 const app = express();
-
+const redisClient = require('./redis');
 
 // Middleware
 app.use(cors({
   origin: 'http://localhost:5173',
 }));
 app.use(express.json());
+
+// Attach Redis client to req
+app.use((req, res, next) => {
+  req.redisClient = redisClient; 
+  next();
+});
 
 // We use express to define our various API endpoints and
 // provide their handlers that we implemented in routes.js

@@ -1,18 +1,24 @@
-
-import PropTypes from 'prop-types';
+import PropTypes from "prop-types";
+import { useLazyLoad } from "../useLazyLoad"; 
 
 function PairImageCard({ directorImage, actorImage, directorName, actorName }) {
+  const { imgRef: directorImgRef, isVisible: isDirectorVisible } = useLazyLoad();
+  const { imgRef: actorImgRef, isVisible: isActorVisible } = useLazyLoad();
+
   return (
     <div className="main-container flex w-[240px] pt-[16px] pr-[16px] pb-[16px] pl-[16px] flex-col gap-[16px] items-start flex-nowrap bg-[#fff] rounded-[8px] border-solid border border-[#d9d9d9] relative mx-auto my-0">
       {/* Director Image */}
       <div
+        ref={directorImgRef}
         className="flex h-[247px] flex-col justify-center items-center self-stretch shrink-0 flex-nowrap bg-[rgba(227,227,227,0.2)] bg-cover bg-no-repeat relative overflow-hidden"
         style={{
-          backgroundImage: `url(${directorImage})`,
-          backgroundSize: 'contain',
-          backgroundPosition: 'center',
+          backgroundImage: isDirectorVisible ? `url(${directorImage})` : "none",
+          backgroundSize: "contain",
+          backgroundPosition: "center",
         }}
-      />
+      >
+        {!isDirectorVisible && <div className="w-full h-full bg-gray-300" />}
+      </div>
 
       {/* Director Name */}
       <div className="flex w-[162px] flex-col gap-[8px] items-start shrink-0 flex-nowrap relative z-[2]">
@@ -25,13 +31,16 @@ function PairImageCard({ directorImage, actorImage, directorName, actorName }) {
 
       {/* Actor Image */}
       <div
+        ref={actorImgRef}
         className="flex h-[247px] flex-col justify-center items-center self-stretch shrink-0 flex-nowrap bg-[rgba(227,227,227,0.2)] bg-cover bg-no-repeat relative overflow-hidden z-[1]"
         style={{
-          backgroundImage: `url(${actorImage})`,
-          backgroundSize: 'contain',
-          backgroundPosition: 'center',
+          backgroundImage: isActorVisible ? `url(${actorImage})` : "none",
+          backgroundSize: "contain",
+          backgroundPosition: "center",
         }}
-      />
+      >
+        {!isActorVisible && <div className="w-full h-full bg-gray-300" />}
+      </div>
 
       {/* Actor Name */}
       <div className="flex w-[162px] flex-col gap-[8px] items-start shrink-0 flex-nowrap relative z-[2]">
