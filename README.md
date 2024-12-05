@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-=======
 
-
->>>>>>> Stashed changes
 ```markdown
 # Project Name MPDB
 
