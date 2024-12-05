@@ -29,7 +29,7 @@ export default function PersonPage() {
     let isMounted = true; // Guard to prevent state updates on unmounted components
     const fetchBackgroundImage = async () => {
       try {
-        fetchData("random", (data) => {
+        fetchData("random?screen=peronspage", (data) => {
           if (isMounted && data?.src) {
             setBackgroundImage(data.src);
           }
