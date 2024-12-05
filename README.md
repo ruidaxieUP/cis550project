@@ -1,5 +1,5 @@
 
-# Project Name MPDB
+# Project Movie People DB (MPDB)
 
 This project is a React client application built with Vite. Movies are the work of people, and people collaborate to create masterpieces. The website presents movie-related data with the emphasis on the actors, the actresses, the directors, and their relationships. Below are the steps to get the client up and running.
 
