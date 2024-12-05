@@ -1,5 +1,4 @@
 
-```markdown
 # Project Name MPDB
 
 This project is a React client application built with Vite. Movies are the work of people, and people collaborate to create masterpieces. The website presents movie-related data with the emphasis on the actors, the actresses, the directors, and their relationships. Below are the steps to get the client up and running.
@@ -9,7 +8,6 @@ This project is a React client application built with Vite. Movies are the work 
 - Node.js (v14 or later)
 - npm (v6 or later)
 
-```
 
 ## Getting Started
 
@@ -58,9 +56,6 @@ This project is a React client application built with Vite. Movies are the work 
    npm install
    ```
 2. Start the server:
-   ```bash
-   npm start
-   ```
    ```bash
    node server.js
    ```
