@@ -59,7 +59,7 @@ const topDirectors = async (req, res) => {
       return res.json(cachedData);
     }
     const query = `
-      SELECT name, profile_path
+      SELECT id, name, profile_path
       FROM person_details
       WHERE known_for_department = 'Directing'
       AND profile_path IS NOT NULL
@@ -68,6 +68,7 @@ const topDirectors = async (req, res) => {
     `;
     const data = await connection.query(query);
     const result = data.rows.map((row) => ({
+      id: row.id,
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
     }));
@@ -91,7 +92,7 @@ const topActors = async (req, res) => {
       return res.json(cachedData);
     }
     const query = `
-      SELECT name, profile_path
+      SELECT id, name, profile_path
       FROM person_details
       WHERE gender = '2'
       AND profile_path IS NOT NULL
@@ -101,6 +102,7 @@ const topActors = async (req, res) => {
     `;
     const data = await connection.query(query);
     const result = data.rows.map((row) => ({
+      id: row.id,
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
     }));
@@ -124,7 +126,7 @@ const topActresses = async (req, res) => {
       return res.json(cachedData);
     }
     const query = `
-      SELECT name, profile_path
+      SELECT id, name, profile_path
       FROM person_details
       WHERE gender = '1'
       AND profile_path IS NOT NULL
@@ -134,6 +136,7 @@ const topActresses = async (req, res) => {
     `;
     const data = await connection.query(query);
     const result = data.rows.map((row) => ({
+      id: row.id,
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
     }));
@@ -177,21 +180,23 @@ const topCombos = async (req, res) => {
       ),
       best_combo AS (
           SELECT DISTINCT ON (director_id)
-              actor_name, actor_image, director_name, director_id, director_image, AVG(rating) AS average_rating
+              cast_id, actor_name, actor_image, director_name, director_id, director_image, AVG(rating) AS average_rating
           FROM cast_director
-          GROUP BY actor_name, actor_image, director_name, director_id, director_image
+          GROUP BY cast_id, actor_name, actor_image, director_name, director_id, director_image
           HAVING COUNT(rating) > 2
           ORDER BY director_id DESC
       )
-      SELECT actor_name, actor_image, director_name, director_image
+      SELECT cast_id, actor_name, actor_image, director_id, director_name, director_image
       FROM best_combo
       ORDER BY average_rating DESC
       LIMIT 10;
     `;
     const data = await connection.query(query);
     const result = data.rows.map((row) => ({
+      actor_id: row.cast_id,
       actorName: row.actor_name,
       actorImage: make_picture_url(picture_size, row.actor_image),
+      director_id: row.director_id,
       directorName: row.director_name,
       directorImage: make_picture_url(picture_size, row.director_image),
     }));
