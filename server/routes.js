@@ -15,9 +15,9 @@ const options = {
   }
 };
 
-
 // Override the default parsing for BIGINT (PostgreSQL type ID 20)
-types.setTypeParser(20, (val) => parseInt(val, 10)); //DO NOT DELETE THIS
+//DO NOT DELETE THIS
+types.setTypeParser(20, (val) => parseInt(val, 10));
 
 // Create PostgreSQL connection using database credentials provided in config.json
 // Do not edit. If the connection fails, make sure to check that config.json is filled out correctly
@@ -39,18 +39,25 @@ function make_picture_url(size, fname) {
     : "https://media.istockphoto.com/id/922962354/vector/no-image-available-sign.jpg?s=612x612&w=0&k=20&c=xbGzQiL_UIMFDUZte1U0end0p3E8iwocIOGt_swlywE=";
 }
 
-// Route 1: GET /api/top-directors
-const topDirectors = async function (req, res) {
-  const redisClient = req.redisClient; // Use Redis client from req
-  const cacheKey = "top_directors";
+async function getCachedData(redisClient, cacheKey) {
+  const cachedData = await redisClient.get(cacheKey);
+  return cachedData ? JSON.parse(cachedData) : null;
+}
 
+async function setCachedData(redisClient, cacheKey, data) {
+  await redisClient.set(cacheKey, JSON.stringify(data), { EX: 3600 });
+}
+
+// Route 1: GET /api/top-directors
+const topDirectors = async (req, res) => {
+  const redisClient = req.redisClient;
+  const cacheKey = "top_directors";
   try {
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
       console.log("Serving from Redis cache");
-      return res.json(JSON.parse(cachedData));
+      return res.json(cachedData);
     }
-
     const query = `
       SELECT name, profile_path
       FROM person_details
@@ -64,10 +71,7 @@ const topDirectors = async function (req, res) {
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
     }));
-
-    // Store the result in Redis with an expiry of 1 hour
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
+    await setCachedData(redisClient, cacheKey, result);
     console.log("Serving from database");
     res.json(result);
   } catch (err) {
@@ -77,18 +81,15 @@ const topDirectors = async function (req, res) {
 };
 
 // Route 2: GET /api/top-actors
-const topActors = async function (req, res) {
+const topActors = async (req, res) => {
   const redisClient = req.redisClient;
   const cacheKey = "top_actors";
-
   try {
-    // Check if the data is cached
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
       console.log("Serving top actors from Redis cache");
-      return res.json(JSON.parse(cachedData));
+      return res.json(cachedData);
     }
-
     const query = `
       SELECT name, profile_path
       FROM person_details
@@ -99,39 +100,29 @@ const topActors = async function (req, res) {
       LIMIT 10;
     `;
     const data = await connection.query(query);
-
     const result = data.rows.map((row) => ({
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
     }));
-
-    // Store the result in Redis with an expiry of 1 hour
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
+    await setCachedData(redisClient, cacheKey, result);
     console.log("Serving top actors from database");
     res.json(result);
   } catch (err) {
     console.error("Error fetching top actors:", err);
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+    res.status(500).json({ error: "Internal server error", details: err.message });
   }
 };
 
 // Route 3: GET /api/top-actresses
-const topActresses = async function (req, res) {
+const topActresses = async (req, res) => {
   const redisClient = req.redisClient;
   const cacheKey = "top_actresses";
-
   try {
-    // Check if the data is cached
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
       console.log("Serving top actresses from Redis cache");
-      return res.json(JSON.parse(cachedData));
+      return res.json(cachedData);
     }
-
     const query = `
       SELECT name, profile_path
       FROM person_details
@@ -142,39 +133,29 @@ const topActresses = async function (req, res) {
       LIMIT 10;
     `;
     const data = await connection.query(query);
-
     const result = data.rows.map((row) => ({
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
     }));
-
-    // Store the result in Redis with an expiry of 1 hour
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
+    await setCachedData(redisClient, cacheKey, result);
     console.log("Serving top actresses from database");
     res.json(result);
   } catch (err) {
     console.error("Error fetching top actresses:", err);
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+    res.status(500).json({ error: "Internal server error", details: err.message });
   }
 };
 
 // Route 4: GET /api/top-combos
-const topCombos = async function (req, res) {
+const topCombos = async (req, res) => {
   const redisClient = req.redisClient;
   const cacheKey = "top_combos";
-
   try {
-    // Check if the data is cached
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
       console.log("Serving top combos from Redis cache");
-      return res.json(JSON.parse(cachedData));
+      return res.json(cachedData);
     }
-
     const query = `
       WITH cast_director AS (
           SELECT 
@@ -208,59 +189,43 @@ const topCombos = async function (req, res) {
       LIMIT 10;
     `;
     const data = await connection.query(query);
-
     const result = data.rows.map((row) => ({
       actorName: row.actor_name,
       actorImage: make_picture_url(picture_size, row.actor_image),
       directorName: row.director_name,
       directorImage: make_picture_url(picture_size, row.director_image),
     }));
-
-    // Store the result in Redis with an expiry of 1 hour
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
+    await setCachedData(redisClient, cacheKey, result);
     console.log("Serving top combos from database");
     res.json(result);
   } catch (err) {
     console.error("Error fetching top combos:", err);
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+    res.status(500).json({ error: "Internal server error", details: err.message });
   }
 };
 
 // Route 5: Get /api/movies Bowen Xiang: Movie main page
-const getMovies = async function (req, res) {
+const getMovies = async (req, res) => {
   const redisClient = req.redisClient;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 16;
   const filter = req.query.filter || "popularity_desc";
-
   const validFilters = {
     name_asc: "name ASC",
     name_desc: "name DESC",
     popularity_asc: "popularity ASC",
     popularity_desc: "popularity DESC",
   };
-
   const orderClause = validFilters[filter];
-  if (!orderClause) {
-    return res.status(400).json({ error: "Invalid filter value" });
-  }
-
+  if (!orderClause) return res.status(400).json({ error: "Invalid filter value" });
   const offset = (page - 1) * pageSize;
   const cacheKey = `movies_page_${page}_pageSize_${pageSize}_filter_${filter}`;
-
   try {
-    // Check if data is cached
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
       console.log("Serving /movies data from Redis cache");
-      return res.json(JSON.parse(cachedData));
+      return res.json(cachedData);
     }
-
-    // Query for movies
     const queryText = `
       SELECT 
         id,
@@ -285,14 +250,10 @@ const getMovies = async function (req, res) {
         AND popularity > 0.5
         AND title != '';
     `;
-
-    // Execute both queries
     const [moviesResult, countResult] = await Promise.all([
       connection.query(queryText, [pageSize, offset]),
       connection.query(countText),
     ]);
-
-    // Process results
     const totalItems = parseInt(countResult.rows[0].count, 10);
     const totalPages = Math.ceil(totalItems / pageSize);
     const transformedResults = moviesResult.rows.map((movie) => ({
@@ -301,39 +262,31 @@ const getMovies = async function (req, res) {
       name: movie.name,
       popularity: movie.popularity,
     }));
-
-    // Prepare response
     const response = {
       results: transformedResults,
       currentPage: page,
       totalPages,
       totalItems,
     };
-
-    // Cache response
-    await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
-
+    await setCachedData(redisClient, cacheKey, response);
     console.log("Serving /movies data from database");
     res.json(response);
   } catch (err) {
     console.error("Error in /movies endpoint:", err);
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+    res.status(500).json({ error: "Internal server error", details: err.message });
   }
 };
 
 // Route 6: GET /api/random
 // const getRandom = async function (req, res) {
-//   const query = `
+//   const query = 
 //     SELECT id, backdrop_path
 // FROM movie_details
 // WHERE backdrop_path IS NOT NULL
 // OFFSET FLOOR(RANDOM() * (SELECT COUNT(*) FROM movie_details WHERE backdrop_path IS NOT NULL))
 // LIMIT 1;
 
-//   `;
+//   ;
 
 //   connection.query(query, (err, data) => {
 //     if (err) {
@@ -350,22 +303,18 @@ const getMovies = async function (req, res) {
 //   });
 // };
 
-
-
 // Route 7: GET /api/persons
 
-const getRandom = async function (req, res) {
-  const redisClient = req.redisClient; 
-  const screen = req.query.screen || "default"; 
+const getRandom = async (req, res) => {
+  const redisClient = req.redisClient;
+  const screen = req.query.screen || "default";
   const cacheKey = `random_picture_${screen}`;
-
   try {
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
       console.log(`Serving random picture for ${screen} from Redis cache`);
-      return res.json(JSON.parse(cachedData)); 
+      return res.json(cachedData);
     }
-
     const query = `
       SELECT id,
              backdrop_path
@@ -375,18 +324,12 @@ const getRandom = async function (req, res) {
       LIMIT 1;
     `;
     const data = await connection.query(query);
-    if (data.rows.length === 0) {
-      return res.status(404).json({ error: "No picture found" });
-    }
-
+    if (data.rows.length === 0) return res.status(404).json({ error: "No picture found" });
     const row = data.rows[0];
     const result = {
       src: make_picture_url(picture_size, row.backdrop_path),
     };
-
-    // Store the result in Redis with an expiry of 1 hour
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
+    await setCachedData(redisClient, cacheKey, result);
     console.log(`Serving random picture for ${screen} from database`);
     res.json(result);
   } catch (err) {
@@ -395,38 +338,28 @@ const getRandom = async function (req, res) {
   }
 };
 
-
 // Route 7: GET /api/persons
 const getPersons = async (req, res) => {
-  const redisClient = req.redisClient; // Fetch redis client from the request object
-  const page = Math.max(parseInt(req.query.page) || 1, 1); // Ensure page >= 1
-  const pageSize = Math.max(parseInt(req.query.pageSize) || 16, 1); // Ensure pageSize >= 1
+  const redisClient = req.redisClient;
+  const page = Math.max(parseInt(req.query.page) || 1, 1);
+  const pageSize = Math.max(parseInt(req.query.pageSize) || 16, 1);
   const filter = req.query.filter || "popularity_desc";
-
   const validFilters = {
     name_asc: "name ASC",
     name_desc: "name DESC",
     popularity_asc: "popularity ASC",
     popularity_desc: "popularity DESC",
   };
-
   const orderClause = validFilters[filter];
-  if (!orderClause) {
-    return res.status(400).json({ error: "Invalid filter value" });
-  }
-
+  if (!orderClause) return res.status(400).json({ error: "Invalid filter value" });
   const offset = (page - 1) * pageSize;
-  const cacheKey = `persons_page_${page}_pageSize_${pageSize}_filter_${filter}`; // Unique cache key
-
+  const cacheKey = `persons_page_${page}_pageSize_${pageSize}_filter_${filter}`;
   try {
-    // Check if the data is cached
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
       console.log("Serving persons data from Redis cache");
-      return res.json(JSON.parse(cachedData));
+      return res.json(cachedData);
     }
-
-    // SQL query with placeholders
     const queryText = `
           SELECT 
               id,
@@ -435,14 +368,13 @@ const getPersons = async (req, res) => {
               popularity
           FROM person_details
           WHERE 
-              name ~ '^[A-Za-z0-9]'  -- Start with alphanumeric character
-              AND popularity > 0.5   -- Minimum popularity threshold
+              name ~ '^[A-Za-z0-9]' 
+              AND popularity > 0.5
           ORDER BY 
-              CASE WHEN profile_path IS NULL THEN 1 ELSE 0 END,  -- Persons with images first
+              CASE WHEN profile_path IS NULL THEN 1 ELSE 0 END,
               ${orderClause}
           LIMIT $1 OFFSET $2;
       `;
-
     const countText = `
           SELECT COUNT(*) AS total
           FROM person_details
@@ -450,44 +382,30 @@ const getPersons = async (req, res) => {
               name ~ '^[A-Za-z0-9]'
               AND popularity > 0.5;
       `;
-
-    // Execute queries in parallel
     const [personsResult, countResult] = await Promise.all([
       connection.query(queryText, [pageSize, offset]),
       connection.query(countText),
     ]);
-
-    // Extract total items and calculate total pages
     const totalItems = parseInt(countResult.rows[0].total, 10);
     const totalPages = Math.ceil(totalItems / pageSize);
-
-    // Transform image paths to URLs
     const transformedResults = personsResult.rows.map((person) => ({
       id: person.id,
       image: make_picture_url(picture_size, person.image),
       name: person.name,
       popularity: person.popularity,
     }));
-
-    // Prepare response
     const response = {
       results: transformedResults,
       currentPage: page,
       totalPages,
       totalItems,
     };
-
-    // Store the response in Redis with a 1-hour expiration
-    await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
-
+    await setCachedData(redisClient, cacheKey, response);
     console.log("Serving persons data from database");
     res.json(response);
   } catch (err) {
     console.error("Error fetching person details:", err);
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+    res.status(500).json({ error: "Internal server error", details: err.message });
   }
 };
 
@@ -528,7 +446,6 @@ const getMovieInfo = async (req, res) => {
     JOIN movie_details ON cast_names.movie_id = movie_details.id
     ORDER BY popularity DESC;
   `;
-
   const dbTransformer = (rows) =>
     rows.map((row) => ({
       poster_path: make_picture_url(picture_size, row.poster_path),
@@ -545,16 +462,12 @@ const getMovieInfo = async (req, res) => {
       revenue: row.revenue,
       overview: row.overview,
     }))[0];
-
   const tmdbTransformer = async (data) => {
     const fetch = (await import("node-fetch")).default;
-
     const creditsResponse = await fetch(`${TMDB_BASE_URL}/movie/${movie_id}/credits`, options);
     const creditsData = await creditsResponse.json();
-
     const director = creditsData.crew.find((person) => person.job === "Director")?.name || "Unknown";
     const cast = creditsData.cast.slice(0, 5).map((actor) => actor.name).join(", ") || "Unknown";
-
     return {
       poster_path: make_picture_url(picture_size, data.poster_path),
       movie_name: data.title,
@@ -571,19 +484,15 @@ const getMovieInfo = async (req, res) => {
       overview: data.overview,
     };
   };
-
   const tmdbURL = `${TMDB_BASE_URL}/movie/${movie_id}`;
-
   try {
     const redisClient = req.redisClient;
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) return res.json(JSON.parse(cachedData));
-
+    const cachedData = await getCachedData(redisClient, cacheKey);
+    if (cachedData) return res.json(cachedData);
     const dbData = await connection.query(query);
     if (dbData.rows.length === 0) throw new Error("No data found in the database");
     const result = dbTransformer(dbData.rows);
-
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+    await setCachedData(redisClient, cacheKey, result);
     res.json(result);
   } catch (error) {
     console.error("Database error or no data found, trying TMDB:", error);
@@ -593,9 +502,8 @@ const getMovieInfo = async (req, res) => {
       if (!response.ok) throw new Error("Failed to fetch from TMDB");
       const tmdbData = await response.json();
       const result = await tmdbTransformer(tmdbData);
-
       const redisClient = req.redisClient;
-      await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+      await setCachedData(redisClient, cacheKey, result);
       res.json(result);
     } catch (tmdbError) {
       console.error("Fallback to TMDB failed:", tmdbError);
@@ -605,11 +513,10 @@ const getMovieInfo = async (req, res) => {
 };
 
 // Route 9: GET /api/movie-casts/:movie_id
-const getMovieCasts = async function (req, res) {
-  const redisClient = req.redisClient; // Get Redis client from the request
+const getMovieCasts = async (req, res) => {
+  const redisClient = req.redisClient;
   const movie_id = req.params.movie_id;
-  const cacheKey = `movie_casts_${movie_id}`; // Define a unique cache key for this movie ID
-
+  const cacheKey = `movie_casts_${movie_id}`;
   const query = `
     SELECT person_id, profile_path, character, name
     FROM movie_cast
@@ -619,31 +526,20 @@ const getMovieCasts = async function (req, res) {
     ORDER BY movie_cast.popularity DESC
     LIMIT 10;
   `;
-
   try {
-    // Check if the data is cached
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving movie casts for movie_id: ${movie_id} from Redis cache`
-      );
-      return res.json(JSON.parse(cachedData)); // Serve cached data
+      console.log(`Serving movie casts for movie_id: ${movie_id} from Redis cache`);
+      return res.json(cachedData);
     }
-
-    // Execute the query if no cached data is found
     const data = await connection.query(query);
-
-    // Process the result
     const result = data.rows.map((row) => ({
       id: row.person_id,
       image: make_picture_url(picture_size, row.profile_path),
       characterName: row.character,
       actorName: row.name,
     }));
-
-    // Store the result in Redis with an expiry of 1 hour
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
+    await setCachedData(redisClient, cacheKey, result);
     console.log(`Serving movie casts for movie_id: ${movie_id} from database`);
     res.json(result);
   } catch (err) {
@@ -653,11 +549,10 @@ const getMovieCasts = async function (req, res) {
 };
 
 // Route 10: GET /api/movie-genres/:movie_id
-const getMovieGenres = async function (req, res) {
-  const redisClient = req.redisClient; // Get Redis client from the request
+const getMovieGenres = async (req, res) => {
+  const redisClient = req.redisClient;
   const movie_id = req.params.movie_id;
-  const cacheKey = `movie_genres_${movie_id}`; // Define a unique cache key for this movie ID
-
+  const cacheKey = `movie_genres_${movie_id}`;
   const query = `
     SELECT DISTINCT genres.id, genres.name
     FROM genres
@@ -665,70 +560,40 @@ const getMovieGenres = async function (req, res) {
     ON genres.id = movie_genres.genre_id
     WHERE movie_id = ${movie_id};
   `;
-
   const fetchGenresFromTMDB = async (movie_id) => {
     const fetch = (await import('node-fetch')).default;
     const url = `${TMDB_BASE_URL}/movie/${movie_id}`;
-
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok) throw new Error('Failed to fetch from TMDB');
-      const data = await response.json();
-
-      const genres = data.genres.map((genre) => ({
-        id: genre.id,
-        name: genre.name,
-      }));
-
-      await redisClient.set(cacheKey, JSON.stringify(genres), { EX: 3600 });
-
-      return genres;
-    } catch (error) {
-      throw error;
-    }
+    const response = await fetch(url, options);
+    if (!response.ok) throw new Error('Failed to fetch from TMDB');
+    const data = await response.json();
+    const genres = data.genres.map((genre) => ({
+      id: genre.id,
+      name: genre.name,
+    }));
+    await setCachedData(redisClient, cacheKey, genres);
+    return genres;
   };
-
   try {
-    // Check if the data is cached
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving movie genres for movie_id: ${movie_id} from Redis cache`
-      );
-      return res.json(JSON.parse(cachedData)); // Serve cached data
+      console.log(`Serving movie genres for movie_id: ${movie_id} from Redis cache`);
+      return res.json(cachedData);
     }
-
-    // Execute the query if no cached data is found
     const data = await connection.query(query);
-
-    // Process the result
     const result = data.rows.map((row) => ({
       id: row.id,
       name: row.name,
     }));
-
-    // Store the result in Redis with an expiry of 1 hour
-    if (result.length === 0) {
-      throw new Error('No data found in the database');
-    }
-
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
+    if (result.length === 0) throw new Error('No data found in the database');
+    await setCachedData(redisClient, cacheKey, result);
     return res.json(result);
   } catch (error) {
-    console.error(
-      `Database error or no data found for movie_id: ${movie_id}`,
-      error
-    );
-
+    console.error(`Database error or no data found for movie_id: ${movie_id}`, error);
     try {
       const tmdbGenres = await fetchGenresFromTMDB(movie_id);
       return res.json(tmdbGenres);
     } catch (tmdbError) {
-      console.error(
-        `Fallback to TMDB failed for movie_id: ${movie_id}`,
-        tmdbError
-      );
+      console.error(`Fallback to TMDB failed for movie_id: ${movie_id}`, tmdbError);
       return res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -740,7 +605,6 @@ const getSimilarMovies = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 8;
   const cacheKey = `similar_movies_${movie_id}_page_${page}_pageSize_${pageSize}`;
-
   const query = `
     WITH this_movie_genres AS (
         SELECT genre_id
@@ -790,7 +654,6 @@ const getSimilarMovies = async (req, res) => {
     GROUP BY rm.movie_id, rm.title, rm.vote_average, rm.poster_path
     ORDER BY rm.vote_average DESC;
   `;
-
   const countQuery = `
     WITH this_movie_genres AS (
         SELECT genre_id
@@ -815,7 +678,6 @@ const getSimilarMovies = async (req, res) => {
     SELECT COUNT(*) AS total
     FROM similar_movie_ids;
   `;
-
   const dbTransformer = (rows, totalItems) => {
     const totalPages = Math.ceil(totalItems / pageSize);
     return {
@@ -830,15 +692,12 @@ const getSimilarMovies = async (req, res) => {
       totalPages,
     };
   };
-
   const tmdbTransformer = async (data) => {
     const fetch = (await import("node-fetch")).default;
-
     const moviesWithGenres = await Promise.all(
       data.results.map(async (movie) => {
         const genreResponse = await fetch(`${TMDB_BASE_URL}/movie/${movie.id}`, options);
         const genreData = await genreResponse.json();
-
         return {
           id: movie.id,
           title: movie.title,
@@ -848,30 +707,21 @@ const getSimilarMovies = async (req, res) => {
         };
       })
     );
-
     return {
       results: moviesWithGenres,
       currentPage: data.page,
       totalPages: data.total_pages,
     };
   };
-
   const tmdbURL = `${TMDB_BASE_URL}/movie/${movie_id}/similar?page=${page}`;
-
   try {
     const redisClient = req.redisClient;
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) return res.json(JSON.parse(cachedData));
-
-    const [dbData, countData] = await Promise.all([
-      connection.query(query),
-      connection.query(countQuery),
-    ]);
-
+    const cachedData = await getCachedData(redisClient, cacheKey);
+    if (cachedData) return res.json(cachedData);
+    const [dbData, countData] = await Promise.all([connection.query(query), connection.query(countQuery)]);
     const totalItems = parseInt(countData.rows[0].total, 10);
     const result = dbTransformer(dbData.rows, totalItems);
-
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+    await setCachedData(redisClient, cacheKey, result);
     res.json(result);
   } catch (error) {
     console.error("Database error or no data found, trying TMDB:", error);
@@ -881,9 +731,8 @@ const getSimilarMovies = async (req, res) => {
       if (!response.ok) throw new Error("Failed to fetch from TMDB");
       const tmdbData = await response.json();
       const result = await tmdbTransformer(tmdbData);
-
       const redisClient = req.redisClient;
-      await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+      await setCachedData(redisClient, cacheKey, result);
       res.json(result);
     } catch (tmdbError) {
       console.error("Fallback to TMDB failed:", tmdbError);
@@ -893,67 +742,59 @@ const getSimilarMovies = async (req, res) => {
 };
 
 // Route 12: GET /api/persons/:person_id
-const getPersonInfo = async function (req, res) {
-  const redisClient = req.redisClient; // Get Redis client from the request
+const getPersonInfo = async (req, res) => {
+  const redisClient = req.redisClient;
   const person_id = req.params.person_id;
-  const cacheKey = `person_info_${person_id}`; // Unique cache key for the person
-
+  const cacheKey = `person_info_${person_id}`;
   const query = `
     SELECT id, name, profile_path, biography, known_for_department
     FROM person_details
     WHERE id = ${person_id};
   `;
-
+  const tmdbTransformer = async (data) => ({
+    id: data.id,
+    name: data.name,
+    imagePath: make_picture_url(picture_size, data.profile_path),
+    knownForDepartment: data.known_for_department || "Unknown",
+    bio: data.biography || "No biography available",
+  });
+  const tmdbURL = `${TMDB_BASE_URL}/person/${person_id}`;
   try {
-    // Check if data is cached
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      console.log(
-        `Serving person info for person_id: ${person_id} from Redis cache`
-      );
-      return res.json(JSON.parse(cachedData));
-    }
-
-    // Query the database if no cached data exists
-    const data = await connection.query(query);
-    if (data.rows.length === 0) {
-      return res.status(404).json({ error: "Person not found" });
-    }
-
-    const row = data.rows[0];
-    const result = {
+    const cachedData = await getCachedData(redisClient, cacheKey);
+    if (cachedData) return res.json(cachedData);
+    const dbData = await connection.query(query);
+    if (dbData.rows.length === 0) throw new Error("No data found in the database");
+    const result = dbData.rows.map((row) => ({
       id: row.id,
       name: row.name,
       imagePath: make_picture_url(picture_size, row.profile_path),
       knownForDepartment: row.known_for_department,
       bio: row.biography,
-    };
-
-    // Cache the result
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 }); // Cache for 1 hour
-
-    console.log(
-      `Serving person info for person_id: ${person_id} from database`
-    );
+    }))[0];
+    await setCachedData(redisClient, cacheKey, result);
     res.json(result);
-  } catch (err) {
-    console.error(
-      `Error fetching person info for person_id: ${person_id}`,
-      err
-    );
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+  } catch (error) {
+    console.error("Database error or no data found, trying TMDB:", error);
+    try {
+      const fetch = (await import("node-fetch")).default;
+      const response = await fetch(tmdbURL, options);
+      if (!response.ok) throw new Error("Failed to fetch from TMDB");
+      const tmdbData = await response.json();
+      const result = await tmdbTransformer(tmdbData);
+      await setCachedData(redisClient, cacheKey, result);
+      res.json(result);
+    } catch (tmdbError) {
+      console.error("Fallback to TMDB failed:", tmdbError);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 };
 
 // Route 13: GET /api/person-genres/:movie_id
-const getPersonGenres = async function (req, res) {
-  const redisClient = req.redisClient; // Get Redis client from the request
+const getPersonGenres = async (req, res) => {
+  const redisClient = req.redisClient;
   const person_id = req.params.person_id;
-  const cacheKey = `person_genres_${person_id}`; // Unique cache key for the person's genres
-
+  const cacheKey = `person_genres_${person_id}`;
   const query = `
     WITH cast_crew AS (
         SELECT name, profile_path, movie_id, person_id, popularity
@@ -973,54 +814,61 @@ const getPersonGenres = async function (req, res) {
     ORDER BY count DESC
     LIMIT 3;
   `;
-
-  try {
-    // Check if data is cached
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      console.log(
-        `Serving person genres for person_id: ${person_id} from Redis cache`
-      );
-      return res.json(JSON.parse(cachedData));
+  const tmdbTransformer = async (data) => {
+    const fetch = (await import("node-fetch")).default;
+    const movieIDs = data.movie_credits.cast.map((movie) => movie.id);
+    const genreCounts = {};
+    for (const id of movieIDs) {
+      const movieResponse = await fetch(`${TMDB_BASE_URL}/movie/${id}`, options);
+      const movieData = await movieResponse.json();
+      movieData.genres.forEach((genre) => {
+        if (!genreCounts[genre.id]) {
+          genreCounts[genre.id] = { id: genre.id, name: genre.name, count: 0 };
+        }
+        genreCounts[genre.id].count++;
+      });
     }
-
-    // Query the database if no cached data exists
-    const data = await connection.query(query);
-
-    // Transform the query result
-    const result = data.rows.map((row) => ({
+    return Object.values(genreCounts)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  };
+  const tmdbURL = `${TMDB_BASE_URL}/person/${person_id}?append_to_response=movie_credits`;
+  try {
+    const cachedData = await getCachedData(redisClient, cacheKey);
+    if (cachedData) return res.json(cachedData);
+    const dbData = await connection.query(query);
+    const result = dbData.rows.map((row) => ({
       id: row.genre_id,
       name: row.name,
     }));
-
-    // Cache the result
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 }); // Cache for 1 hour
-
-    console.log(
-      `Serving person genres for person_id: ${person_id} from database`
-    );
+    if (result.length === 0) throw new Error("No data found in the database");
+    await setCachedData(redisClient, cacheKey, result);
     res.json(result);
-  } catch (err) {
-    console.error(
-      `Error fetching person genres for person_id: ${person_id}`,
-      err
-    );
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+  } catch (error) {
+    console.error("Database error or no data found, trying TMDB:", error);
+    try {
+      const fetch = (await import("node-fetch")).default;
+      const response = await fetch(tmdbURL, options);
+      if (!response.ok) throw new Error("Failed to fetch from TMDB");
+      const tmdbData = await response.json();
+      const result = await tmdbTransformer(tmdbData);
+      await setCachedData(redisClient, cacheKey, result);
+      res.json(result);
+    } catch (tmdbError) {
+      console.error("Fallback to TMDB failed:", tmdbError);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 };
 
 // Route 14: GET /api/person-known-for/:person_id
-const getPersonKnownFor = async function (req, res) {
-  const redisClient = req.redisClient; // Get Redis client from the request
+const getPersonKnownFor = async (req, res) => {
+  const redisClient = req.redisClient;
   const person_id = req.params.person_id;
   const page = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.pageSize) || 8; // Default to 8 items per page
+  const pageSize = parseInt(req.query.pageSize) || 8;
   const offset = (page - 1) * pageSize;
-  const cacheKey = `person_known_for_${person_id}_page_${page}_pageSize_${pageSize}`; // Unique cache key
-
+  const cacheKey = `person_known_for_${person_id}_page_${page}_pageSize_${pageSize}`;
   const query = `
     WITH cast_crew AS (
         SELECT name, character, movie_id, person_id, popularity, profile_path
@@ -1042,7 +890,6 @@ const getPersonKnownFor = async function (req, res) {
     ORDER BY movie_details.popularity DESC
     LIMIT ${pageSize} OFFSET ${offset};
   `;
-
   const countQuery = `
     WITH cast_crew AS (
         SELECT name, character, movie_id, person_id, popularity, profile_path
@@ -1057,65 +904,57 @@ const getPersonKnownFor = async function (req, res) {
     ON cast_crew.movie_id = movie_details.id
     WHERE person_id = ${person_id};
   `;
-
+  const tmdbTransformer = (data) => ({
+    results: data.movie_credits.cast.slice(0, pageSize).map((movie) => ({
+      movieId: movie.id,
+      posterPath: make_picture_url(picture_size, movie.poster_path),
+      movieName: movie.title,
+      characterName: movie.character || "N/A",
+      rating: movie.vote_average,
+    })),
+    currentPage: page,
+    totalPages: Math.ceil(data.movie_credits.cast.length / pageSize),
+  });
+  const tmdbURL = `${TMDB_BASE_URL}/person/${person_id}?append_to_response=movie_credits`;
   try {
-    // Check if data is cached
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      console.log(
-        `Serving person known for person_id: ${person_id} from Redis cache`
-      );
-      return res.json(JSON.parse(cachedData));
-    }
-
-    // Execute both queries using the existing connection
-    const [data, countData] = await Promise.all([
-      connection.query(query),
-      connection.query(countQuery),
-    ]);
-
-    // Calculate pagination values
+    const cachedData = await getCachedData(redisClient, cacheKey);
+    if (cachedData) return res.json(cachedData);
+    const [dbData, countData] = await Promise.all([connection.query(query), connection.query(countQuery)]);
     const totalItems = parseInt(countData.rows[0].total, 10);
     const totalPages = Math.ceil(totalItems / pageSize);
-
-    // Prepare and transform the response data
-    const results = data.rows.map((row) => ({
-      movieId: row.movie_id, // Include movie_id in the response
+    const results = dbData.rows.map((row) => ({
+      movieId: row.movie_id,
       posterPath: make_picture_url(picture_size, row.poster_path),
       movieName: row.title,
       characterName: row.character,
       rating: row.vote_average,
     }));
-
-    const response = {
-      results,
-      currentPage: page,
-      totalPages,
-      totalItems,
-    };
-
-    // Cache the response with an expiry of 1 hour
-    await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
-
-    console.log(
-      `Serving person known for person_id: ${person_id} from database`
-    );
+    const response = { results, currentPage: page, totalPages };
+    if (results.length === 0) throw new Error("No data found in the database");
+    await setCachedData(redisClient, cacheKey, response);
     res.json(response);
-  } catch (err) {
-    console.error("Error fetching person known for:", err);
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+  } catch (error) {
+    console.error("Database error or no data found, trying TMDB:", error);
+    try {
+      const fetch = (await import("node-fetch")).default;
+      const response = await fetch(tmdbURL, options);
+      if (!response.ok) throw new Error("Failed to fetch from TMDB");
+      const tmdbData = await response.json();
+      const result = await tmdbTransformer(tmdbData);
+      await setCachedData(redisClient, cacheKey, result);
+      res.json(result);
+    } catch (tmdbError) {
+      console.error("Fallback to TMDB failed:", tmdbError);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 };
 
 // Route 15: GET /api/person-collaborators/:person_id
-const getPersonCollaborators = async function (req, res) {
-  const redisClient = req.redisClient; // Get Redis client from the request
-  const person_id = req.params.person_id;
-  const cacheKey = `person_collaborators_${person_id}`; // Unique cache key for collaborators
-
+const getPersonCollaborators = async (req, res) => {
+  const redisClient = req.redisClient;
+  const person_id = parseInt(req.params.person_id, 10);
+  const cacheKey = `person_collaborators_${person_id}`;
   const query = `
     WITH cast_crew AS (
         SELECT name, profile_path, movie_id, person_id, popularity
@@ -1145,54 +984,71 @@ const getPersonCollaborators = async function (req, res) {
     ORDER BY popularity DESC
     LIMIT 10;
   `;
-
-  try {
-    // Check if data is cached
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      console.log(
-        `Serving collaborators for person_id: ${person_id} from Redis cache`
-      );
-      return res.json(JSON.parse(cachedData));
+  const tmdbTransformer = async (data) => {
+    const fetch = (await import("node-fetch")).default;
+    const movies = data.movie_credits.cast.map((movie) => movie.id);
+    const collaborators = {};
+    for (const movieId of movies) {
+      const creditsResponse = await fetch(`${TMDB_BASE_URL}/movie/${movieId}/credits`, options);
+      const creditsData = await creditsResponse.json();
+      creditsData.cast.forEach((collaborator) => {
+        if (collaborator.id !== person_id) {
+          if (!collaborators[collaborator.id]) {
+            collaborators[collaborator.id] = {
+              id: collaborator.id,
+              name: collaborator.name,
+              profile_path: collaborator.profile_path,
+              appearances: 0,
+            };
+          }
+          collaborators[collaborator.id].appearances++;
+        }
+      });
     }
-
-    // Query the database if no cache exists
-    const data = await connection.query(query);
-
-    // Process the result
-    const result = data.rows.map((row) => ({
+    return Object.values(collaborators)
+      .sort((a, b) => b.appearances - a.appearances)
+      .slice(0, 10)
+      .map((collaborator) => ({
+        src: make_picture_url(picture_size, collaborator.profile_path),
+        title: collaborator.name,
+      }));
+  };
+  const tmdbURL = `${TMDB_BASE_URL}/person/${person_id}?append_to_response=movie_credits`;
+  try {
+    const cachedData = await getCachedData(redisClient, cacheKey);
+    if (cachedData) return res.json(cachedData);
+    const dbData = await connection.query(query);
+    const result = dbData.rows.map((row) => ({
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
     }));
-
-    // Store the result in Redis with an expiry of 1 hour
-    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
-    console.log(
-      `Serving collaborators for person_id: ${person_id} from database`
-    );
+    if (result.length === 0) throw new Error("No data found in the database");
+    await setCachedData(redisClient, cacheKey, result);
     res.json(result);
-  } catch (err) {
-    console.error("Error fetching person collaborators:", err);
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+  } catch (error) {
+    console.error("Database error or no data found, trying TMDB:", error);
+    try {
+      const fetch = (await import("node-fetch")).default;
+      const response = await fetch(tmdbURL, options);
+      if (!response.ok) throw new Error("Failed to fetch from TMDB");
+      const tmdbData = await response.json();
+      const result = await tmdbTransformer(tmdbData);
+      await setCachedData(redisClient, cacheKey, result);
+      res.json(result);
+    } catch (tmdbError) {
+      console.error("Fallback to TMDB failed:", tmdbError);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 };
 
 // Route 16: GET /api/search-persons
-const searchPersons = async function (req, res) {
-  const redisClient = req.redisClient; // Get Redis client from the request
+const searchPersons = async (req, res) => {
+  const redisClient = req.redisClient;
   const { query = "", page = 1, pageSize = 10 } = req.query;
-
-  if (!query.trim()) {
-    return res.status(400).json({ error: "Query parameter is required." });
-  }
-
+  if (!query.trim()) return res.status(400).json({ error: "Query parameter is required." });
   const offset = (page - 1) * pageSize;
-  const cacheKey = `search_persons_${query.toLowerCase()}_page_${page}_pageSize_${pageSize}`; // Unique cache key for search query
-
+  const cacheKey = `search_persons_${query.toLowerCase()}_page_${page}_pageSize_${pageSize}`;
   const sqlQuery = `
     SELECT id, profile_path, known_for_department, name
     FROM person_details
@@ -1200,44 +1056,30 @@ const searchPersons = async function (req, res) {
     ORDER BY popularity DESC
     LIMIT $2 OFFSET $3;
   `;
-
   try {
-    // Check if data is cached
-    const cachedData = await redisClient.get(cacheKey);
+    const cachedData = await getCachedData(redisClient, cacheKey);
     if (cachedData) {
-      console.log(
-        `Serving search results for query: "${query}" from Redis cache`
-      );
-      return res.json(JSON.parse(cachedData));
+      console.log(`Serving search results for query: "${query}" from Redis cache`);
+      return res.json(cachedData);
     }
-
-    // Query the database if no cache exists
     const data = await connection.query(sqlQuery, [
       `%${query.toLowerCase()}%`,
       parseInt(pageSize),
       offset,
     ]);
-
-    // Process the result
     const results = data.rows.map((row) => ({
       id: row.id,
       profile_path: make_picture_url(picture_size, row.profile_path),
       known_for_department: row.known_for_department || "Unknown",
       name: row.name,
     }));
-
     const response = { results };
-
-    // Store the result in Redis with an expiry of 1 hour
-    await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
-
+    await setCachedData(redisClient, cacheKey, response);
     console.log(`Serving search results for query: "${query}" from database`);
     res.json(response);
   } catch (err) {
     console.error("Error fetching search results:", err);
-    res
-      .status(500)
-      .json({ error: "Internal server error", details: err.message });
+    res.status(500).json({ error: "Internal server error", details: err.message });
   }
 };
 
