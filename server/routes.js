@@ -492,11 +492,9 @@ const getPersons = async (req, res) => {
 };
 
 // Route 8: GET /api/movies/:movie_id
-const getMovieInfo = async function (req, res) {
-  const redisClient = req.redisClient; // Get the Redis client from the request
+const getMovieInfo = async (req, res) => {
   const movie_id = req.params.movie_id;
-  const cacheKey = `movie_info_${movie_id}`; // Define a unique cache key for this movie ID
-
+  const cacheKey = `movie_info_${movie_id}`;
   const query = `
     WITH top_5_cast AS (
         SELECT movie_id, name
@@ -531,25 +529,8 @@ const getMovieInfo = async function (req, res) {
     ORDER BY popularity DESC;
   `;
 
-  try {
-    // Check if the data is cached
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      console.log(
-        `Serving movie info for movie_id: ${movie_id} from Redis cache`
-      );
-      return res.json(JSON.parse(cachedData)); // Serve cached data
-    }
-
-    // Execute the query if no cached data is found
-    const data = await connection.query(query);
-
-    if (data.rows.length === 0) {
-      return res.status(404).json({ error: "Movie not found" });
-    }
-
-    const row = data.rows[0];
-    const result = {
+  const dbTransformer = (rows) =>
+    rows.map((row) => ({
       poster_path: make_picture_url(picture_size, row.poster_path),
       movie_name: row.movie_name,
       production_year: row.production_year,
@@ -563,16 +544,63 @@ const getMovieInfo = async function (req, res) {
       budget: row.budget,
       revenue: row.revenue,
       overview: row.overview,
+    }))[0];
+
+  const tmdbTransformer = async (data) => {
+    const fetch = (await import("node-fetch")).default;
+
+    const creditsResponse = await fetch(`${TMDB_BASE_URL}/movie/${movie_id}/credits`, options);
+    const creditsData = await creditsResponse.json();
+
+    const director = creditsData.crew.find((person) => person.job === "Director")?.name || "Unknown";
+    const cast = creditsData.cast.slice(0, 5).map((actor) => actor.name).join(", ") || "Unknown";
+
+    return {
+      poster_path: make_picture_url(picture_size, data.poster_path),
+      movie_name: data.title,
+      production_year: new Date(data.release_date).getFullYear(),
+      rating: data.vote_average,
+      votes: data.vote_count,
+      status: data.status,
+      director,
+      cast,
+      released_date: data.release_date,
+      duration: data.runtime,
+      budget: data.budget,
+      revenue: data.revenue,
+      overview: data.overview,
     };
+  };
 
-    // Store the result in Redis with an expiry of 1 hour
+  const tmdbURL = `${TMDB_BASE_URL}/movie/${movie_id}`;
+
+  try {
+    const redisClient = req.redisClient;
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) return res.json(JSON.parse(cachedData));
+
+    const dbData = await connection.query(query);
+    if (dbData.rows.length === 0) throw new Error("No data found in the database");
+    const result = dbTransformer(dbData.rows);
+
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
-
-    console.log(`Serving movie info for movie_id: ${movie_id} from database`);
     res.json(result);
-  } catch (err) {
-    console.error(`Error fetching movie info for movie_id: ${movie_id}`, err);
-    res.status(500).json({ error: "Internal server error" });
+  } catch (error) {
+    console.error("Database error or no data found, trying TMDB:", error);
+    try {
+      const fetch = (await import("node-fetch")).default;
+      const response = await fetch(tmdbURL, options);
+      if (!response.ok) throw new Error("Failed to fetch from TMDB");
+      const tmdbData = await response.json();
+      const result = await tmdbTransformer(tmdbData);
+
+      const redisClient = req.redisClient;
+      await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+      res.json(result);
+    } catch (tmdbError) {
+      console.error("Fallback to TMDB failed:", tmdbError);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 };
 
@@ -707,14 +735,11 @@ const getMovieGenres = async function (req, res) {
 };
 
 // Route 11: GET /api/similar-movies/:movie_id
-const getSimilarMovies = async function (req, res) {
-  const redisClient = req.redisClient; // Get Redis client from the request
+const getSimilarMovies = async (req, res) => {
   const movie_id = req.params.movie_id;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 8;
-  const offset = (page - 1) * pageSize;
-
-  const cacheKey = `similar_movies_${movie_id}_page_${page}_pageSize_${pageSize}`; // Unique cache key
+  const cacheKey = `similar_movies_${movie_id}_page_${page}_pageSize_${pageSize}`;
 
   const query = `
     WITH this_movie_genres AS (
@@ -761,7 +786,7 @@ const getSimilarMovies = async function (req, res) {
         ON rm.movie_id = movie_genres.movie_id
     JOIN genres
         ON movie_genres.genre_id = genres.id
-    WHERE rm.row_num > ${offset} AND rm.row_num <= ${offset} + ${pageSize}
+    WHERE rm.row_num > ${(page - 1) * pageSize} AND rm.row_num <= ${page * pageSize}
     GROUP BY rm.movie_id, rm.title, rm.vote_average, rm.poster_path
     ORDER BY rm.vote_average DESC;
   `;
@@ -791,56 +816,79 @@ const getSimilarMovies = async function (req, res) {
     FROM similar_movie_ids;
   `;
 
-  try {
-    // Check if data is cached
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      console.log(
-        `Serving similar movies for movie_id: ${movie_id} from Redis cache`
-      );
-      return res.json(JSON.parse(cachedData));
-    }
+  const dbTransformer = (rows, totalItems) => {
+    const totalPages = Math.ceil(totalItems / pageSize);
+    return {
+      results: rows.map((row) => ({
+        id: row.movie_id,
+        title: row.title,
+        rating: parseFloat(row.vote_average),
+        image: make_picture_url(picture_size, row.poster_path),
+        genres: row.genres,
+      })),
+      currentPage: page,
+      totalPages,
+    };
+  };
 
-    // Execute the queries
-    const [data, countData] = await Promise.all([
+  const tmdbTransformer = async (data) => {
+    const fetch = (await import("node-fetch")).default;
+
+    const moviesWithGenres = await Promise.all(
+      data.results.map(async (movie) => {
+        const genreResponse = await fetch(`${TMDB_BASE_URL}/movie/${movie.id}`, options);
+        const genreData = await genreResponse.json();
+
+        return {
+          id: movie.id,
+          title: movie.title,
+          rating: movie.vote_average,
+          image: make_picture_url(picture_size, movie.poster_path),
+          genres: genreData.genres.map((genre) => ({ id: genre.id, name: genre.name })),
+        };
+      })
+    );
+
+    return {
+      results: moviesWithGenres,
+      currentPage: data.page,
+      totalPages: data.total_pages,
+    };
+  };
+
+  const tmdbURL = `${TMDB_BASE_URL}/movie/${movie_id}/similar?page=${page}`;
+
+  try {
+    const redisClient = req.redisClient;
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) return res.json(JSON.parse(cachedData));
+
+    const [dbData, countData] = await Promise.all([
       connection.query(query),
       connection.query(countQuery),
     ]);
 
     const totalItems = parseInt(countData.rows[0].total, 10);
-    const totalPages = Math.ceil(totalItems / pageSize);
+    const result = dbTransformer(dbData.rows, totalItems);
 
-    const results = data.rows.map((row) => ({
-      id: row.movie_id,
-      title: row.title,
-      rating: parseFloat(row.vote_average),
-      image: make_picture_url(picture_size, row.poster_path),
-      genres: row.genres,
-    }));
+    await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+    res.json(result);
+  } catch (error) {
+    console.error("Database error or no data found, trying TMDB:", error);
+    try {
+      const fetch = (await import("node-fetch")).default;
+      const response = await fetch(tmdbURL, options);
+      if (!response.ok) throw new Error("Failed to fetch from TMDB");
+      const tmdbData = await response.json();
+      const result = await tmdbTransformer(tmdbData);
 
-    const response = {
-      results,
-      currentPage: page,
-      totalPages,
-      totalItems,
-    };
-
-    // Cache the response
-    await redisClient.set(cacheKey, JSON.stringify(response), { EX: 3600 });
-
-    console.log(
-      `Serving similar movies for movie_id: ${movie_id} from database`
-    );
-    res.json(response);
-  } catch (err) {
-    console.error(
-      `Error fetching similar movies for movie_id: ${movie_id}`,
-      err
-    );
-    res.status(500).json({
-      error: "Internal server error",
-      details: err.message,
-    });
+      const redisClient = req.redisClient;
+      await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
+      res.json(result);
+    } catch (tmdbError) {
+      console.error("Fallback to TMDB failed:", tmdbError);
+      res.status(500).json({ error: "Internal server error" });
+    }
   }
 };
 
