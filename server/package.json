@@ -12,12 +12,18 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "mysql2": "^3.11.5",
+    "node-fetch": "^3.3.2",
     "nodemon": "^3.1.7",
     "pg": "^8.12.0",
     "redis": "^4.7.0",
-    "supertest": "^6.3.3"
+    "supertest": "^6.3.3",
+    "tmdbv3": "^0.1.2"
   },
   "devDependencies": {
     "jest": "^29.3.1"
-  }
+  },
+  "description": "---",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

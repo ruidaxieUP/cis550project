@@ -6,6 +6,16 @@ const picture_size = "w500";
 const default_picture =
   "https://upload.wikimedia.org/wikipedia/commons/a/a2/Person_Image_Placeholder.png";
 
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const options = {
+  method: 'GET',
+  headers: {
+    accept: 'application/json',
+    Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3NzY4NmY4MWJkZjhlNzRiZDY1NmE3ZDNkMGVmYWI1YSIsIm5iZiI6MTcyNjIzNTEwMy4xODUsInN1YiI6IjY2ZTQ0MWRmMDAwMDAwMDAwMGI5YWQ2ZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.tMF3b7xakhldoQMDmYUqzp4-_NGJRirskkyoJ89lAn4'
+  }
+};
+
+
 // Override the default parsing for BIGINT (PostgreSQL type ID 20)
 types.setTypeParser(20, (val) => parseInt(val, 10)); //DO NOT DELETE THIS
 
@@ -628,8 +638,29 @@ const getMovieGenres = async function (req, res) {
     WHERE movie_id = ${movie_id};
   `;
 
+  const fetchGenresFromTMDB = async (movie_id) => {
+    const fetch = (await import('node-fetch')).default;
+    const url = `${TMDB_BASE_URL}/movie/${movie_id}`;
+
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) throw new Error('Failed to fetch from TMDB');
+      const data = await response.json();
+
+      const genres = data.genres.map((genre) => ({
+        id: genre.id,
+        name: genre.name,
+      }));
+
+      await redisClient.set(cacheKey, JSON.stringify(genres), { EX: 3600 });
+
+      return genres;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   try {
-    // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
       console.log(
@@ -648,13 +679,29 @@ const getMovieGenres = async function (req, res) {
     }));
 
     // Store the result in Redis with an expiry of 1 hour
+    if (result.length === 0) {
+      throw new Error('No data found in the database');
+    }
+
     await redisClient.set(cacheKey, JSON.stringify(result), { EX: 3600 });
 
-    console.log(`Serving movie genres for movie_id: ${movie_id} from database`);
-    res.json(result);
-  } catch (err) {
-    console.error(`Error fetching movie genres for movie_id: ${movie_id}`, err);
-    res.status(500).json({ error: "Internal server error" });
+    return res.json(result);
+  } catch (error) {
+    console.error(
+      `Database error or no data found for movie_id: ${movie_id}`,
+      error
+    );
+
+    try {
+      const tmdbGenres = await fetchGenresFromTMDB(movie_id);
+      return res.json(tmdbGenres);
+    } catch (tmdbError) {
+      console.error(
+        `Fallback to TMDB failed for movie_id: ${movie_id}`,
+        tmdbError
+      );
+      return res.status(500).json({ error: 'Internal server error' });
+    }
   }
 };
 
