@@ -2,20 +2,26 @@ import PropTypes from "prop-types";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart } from "@fortawesome/free-solid-svg-icons";
 import { Link } from "react-router-dom";
+import { useLazyLoad } from "../useLazyLoad"; 
 
-
-export default function Card({ image, title, rating, itemId, type}) {
+export default function Card({ image, title, rating, itemId, type }) {
+  const { imgRef, isVisible } = useLazyLoad();
   const linkTo = type === "person" ? `/persons/${itemId}` : `/movies/${itemId}`;
 
   return (
     <div className="flex flex-col w-[241px] h-[346px] p-[16px] bg-[#fff] rounded-[8px] border border-[#d9d9d9]">
-      {/* Image */}
+      {/* Image Section */}
       <div
-        className="w-full h-[247px] bg-cover bg-center mb-4"
+        ref={imgRef}
+        className="w-full h-[247px] bg-gray-300 rounded-md mb-4"
         style={{
-          backgroundImage: `url(${image})`,
+          backgroundImage: isVisible ? `url(${image})` : "none",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
-      ></div>
+      >
+        {!isVisible && <div className="w-full h-full bg-gray-300" />} {/* Placeholder */}
+      </div>
 
       {/* Title as Link */}
       <Link
@@ -24,9 +30,6 @@ export default function Card({ image, title, rating, itemId, type}) {
       >
         {title}
       </Link>
-
-      {/* Title
-      <h3 className="text-[16px] font-semibold text-[#1e1e1e]">{title}</h3> */}
 
       {/* Rating with Heart Icon */}
       <div className="flex gap-[8px] items-center mt-2">
@@ -37,7 +40,7 @@ export default function Card({ image, title, rating, itemId, type}) {
         />
 
         {/* Rating */}
-        <span className=" text-[16px] text-[#1e1e1e]">
+        <span className="text-[16px] text-[#1e1e1e]">
           {rating}
         </span>
       </div>
@@ -50,5 +53,5 @@ Card.propTypes = {
   title: PropTypes.string.isRequired,
   rating: PropTypes.number.isRequired,
   itemId: PropTypes.number.isRequired,
-  type: PropTypes.oneOf(["movie", "person"]).isRequired, 
+  type: PropTypes.oneOf(["movie", "person"]).isRequired,
 };

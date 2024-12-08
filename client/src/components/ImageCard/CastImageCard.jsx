@@ -1,7 +1,10 @@
 import PropTypes from "prop-types";
 import { Link } from "react-router-dom";
+import { useLazyLoad } from "../useLazyLoad"; 
 
 const CastImageCard = ({ image, characterName, actorName, actorId }) => {
+  const { imgRef, isVisible } = useLazyLoad();
+
   return (
     <div className="main-container w-[182px] h-[235.401px] text-[0px] relative mx-auto my-0">
       {/* Character Name */}
@@ -17,13 +20,18 @@ const CastImageCard = ({ image, characterName, actorName, actorId }) => {
         {actorName}
       </Link>
 
-      {/* Circular Image */}
+      {/* Circular Image with Lazy Loading */}
       <div
+        ref={imgRef}
         className="w-full h-[75.93%] rounded-full bg-cover bg-center bg-no-repeat absolute top-0 left-0 z-[1]"
         style={{
-          backgroundImage: `url(${image})`,
+          backgroundImage: isVisible ? `url(${image})` : "none",
         }}
-      />
+      >
+        {!isVisible && (
+          <div className="w-full h-full bg-gray-300 rounded-full" />
+        )}
+      </div>
     </div>
   );
 };
