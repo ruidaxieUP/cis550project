@@ -19,7 +19,7 @@ function ImageSlider({ title, data, sliderSettings }) {
       <div className="w-full">
         <Slider {...sliderSettings}>
           {data.map((item, index) => (
-            <ImageCard key={index} image={item.src} name={item.title} />
+            <ImageCard key={index} image={item.src} name={item.title} personId={item.id}/>
           ))}
         </Slider>
       </div>
@@ -73,6 +73,8 @@ function PairImageSlider({ title, data }) {
             <PairImageCard
               key={index}
               directorImage={item.directorImage}
+              actorId={item.actor_id}
+              directorId={item.director_id}
               actorImage={item.actorImage}
               directorName={item.directorName}
               actorName={item.actorName}

@@ -1,7 +1,8 @@
 import PropTypes from "prop-types";
-import { useLazyLoad } from "../useLazyLoad"; 
+import { useLazyLoad } from "../useLazyLoad";
+import { Link } from "react-router-dom";
 
-function PairImageCard({ directorImage, actorImage, directorName, actorName }) {
+function PairImageCard({ directorImage, actorImage, directorName, actorName, actorId, directorId }) {
   const { imgRef: directorImgRef, isVisible: isDirectorVisible } = useLazyLoad();
   const { imgRef: actorImgRef, isVisible: isActorVisible } = useLazyLoad();
 
@@ -20,12 +21,15 @@ function PairImageCard({ directorImage, actorImage, directorName, actorName }) {
         {!isDirectorVisible && <div className="w-full h-full bg-gray-300" />}
       </div>
 
-      {/* Director Name */}
+      {/* Director Name with Link */}
       <div className="flex w-[162px] flex-col gap-[8px] items-start shrink-0 flex-nowrap relative z-[2]">
         <div className="flex w-[162px] items-start shrink-0 flex-nowrap relative z-[3]">
-          <span className="h-[22px] shrink-0 basis-auto text-[16px] font-semibold leading-[22px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[4]">
+          <Link
+            to={`/persons/${directorId}`}
+            className="h-[22px] shrink-0 basis-auto text-[16px] font-semibold leading-[22px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[4]"
+          >
             {directorName}
-          </span>
+          </Link>
         </div>
       </div>
 
@@ -42,12 +46,15 @@ function PairImageCard({ directorImage, actorImage, directorName, actorName }) {
         {!isActorVisible && <div className="w-full h-full bg-gray-300" />}
       </div>
 
-      {/* Actor Name */}
+      {/* Actor Name with Link */}
       <div className="flex w-[162px] flex-col gap-[8px] items-start shrink-0 flex-nowrap relative z-[2]">
         <div className="flex w-[162px] items-start shrink-0 flex-nowrap relative z-[3]">
-          <span className="h-[22px] shrink-0 basis-auto text-[16px] font-semibold leading-[22px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[4]">
+          <Link
+            to={`/persons/${actorId}`}
+            className="h-[22px] shrink-0 basis-auto text-[16px] font-semibold leading-[22px] text-[#1e1e1e] relative text-left whitespace-nowrap z-[4]"
+          >
             {actorName}
-          </span>
+          </Link>
         </div>
       </div>
     </div>
@@ -59,6 +66,8 @@ PairImageCard.propTypes = {
   actorImage: PropTypes.string.isRequired,
   directorName: PropTypes.string.isRequired,
   actorName: PropTypes.string.isRequired,
+  actorId: PropTypes.number.isRequired,
+  directorId: PropTypes.number.isRequired,
 };
 
 export default PairImageCard;
