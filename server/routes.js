@@ -11,7 +11,7 @@ const options = {
   method: 'GET',
   headers: {
     accept: 'application/json',
-    Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3NzY4NmY4MWJkZjhlNzRiZDY1NmE3ZDNkMGVmYWI1YSIsIm5iZiI6MTcyNjIzNTEwMy4xODUsInN1YiI6IjY2ZTQ0MWRmMDAwMDAwMDAwMGI5YWQ2ZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.tMF3b7xakhldoQMDmYUqzp4-_NGJRirskkyoJ89lAn4'
+    Authorization: config.auth,
   }
 };
 
@@ -661,6 +661,7 @@ const getMovieGenres = async function (req, res) {
   };
 
   try {
+    // Check if the data is cached
     const cachedData = await redisClient.get(cacheKey);
     if (cachedData) {
       console.log(
