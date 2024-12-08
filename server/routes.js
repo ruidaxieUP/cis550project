@@ -969,7 +969,7 @@ const getPersonCollaborators = async (req, res) => {
         FROM movie_crew
     ),
     top_collaborators AS (
-        SELECT name, profile_path, popularity
+        SELECT person_id, name, profile_path, popularity
         FROM cast_crew
         WHERE cast_crew.person_id <> ${person_id}
         AND movie_id IN (
@@ -983,7 +983,7 @@ const getPersonCollaborators = async (req, res) => {
             ROW_NUMBER() OVER (PARTITION BY name) AS row_num
         FROM top_collaborators
     )
-    SELECT name, profile_path
+    SELECT person_id as id, name, profile_path
     FROM ordered_rows
     WHERE row_num = 1
     ORDER BY popularity DESC
@@ -1014,6 +1014,7 @@ const getPersonCollaborators = async (req, res) => {
       .sort((a, b) => b.appearances - a.appearances)
       .slice(0, 10)
       .map((collaborator) => ({
+        id: collaborator.id,
         src: make_picture_url(picture_size, collaborator.profile_path),
         title: collaborator.name,
       }));
@@ -1024,6 +1025,7 @@ const getPersonCollaborators = async (req, res) => {
     if (cachedData) return res.json(cachedData);
     const dbData = await connection.query(query);
     const result = dbData.rows.map((row) => ({
+      id: row.id,
       src: make_picture_url(picture_size, row.profile_path),
       title: row.name,
     }));
